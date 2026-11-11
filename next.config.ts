@@ -1,9 +1,9 @@
-import type { NextConfig } from "next";
+import type { NextConfig } from "next"
 
 const nextConfig: NextConfig = {
-  /* config options here */
-  cacheComponents: true,
-  partialPrefetching: true,
+  // cacheComponents і partialPrefetching вимкнено свідомо: з ними кожне читання
+  // cookies (сесія Supabase) мусить бути за <Suspense>, інакше збірка падає.
+  // Для застосунку, де майже всі сторінки персональні, це лише ускладнення.
   turbopack: {
     rules: {
       "*.css": {
@@ -12,6 +12,6 @@ const nextConfig: NextConfig = {
       },
     },
   },
-};
+}
 
-export default nextConfig;
+export default nextConfig
