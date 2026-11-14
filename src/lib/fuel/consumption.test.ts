@@ -39,3 +39,14 @@ describe("витрата пального «від повного до повн�
     expect(averageConsumption([])).toBeNull()
   })
 })
+
+describe("прив'язка сегментів до заправок", () => {
+  it("сегмент знає, яка заправка його закриває (для колонки L/100 km і графіка)", () => {
+    const segments = fuelSegments([
+      { id: "a", date: "2026-09-02", mileage: 10_000, liters: 45, isFullTank: true },
+      { id: "b", date: "2026-09-10", mileage: 10_350, liters: 20, isFullTank: false },
+      { id: "c", date: "2026-09-19", mileage: 10_700, liters: 25, isFullTank: true },
+    ])
+    expect(segments.map((s) => [s.toId, s.toDate])).toEqual([["c", "2026-09-19"]])
+  })
+})

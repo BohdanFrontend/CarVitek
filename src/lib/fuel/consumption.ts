@@ -1,4 +1,6 @@
 export type FuelRecordInput = {
+  /** id запису (щоб показати витрату біля заправки, що закриває сегмент) */
+  id?: string
   mileage: number
   liters: number
   isFullTank: boolean
@@ -12,6 +14,9 @@ export type FuelSegment = {
   liters: number
   distance: number
   lPer100km: number
+  /** Заправка, що закриває сегмент */
+  toId?: string
+  toDate?: string
 }
 
 /**
@@ -40,6 +45,8 @@ export function fuelSegments(records: FuelRecordInput[]): FuelSegment[] {
         liters,
         distance,
         lPer100km: (100 * liters) / distance,
+        toId: r.id,
+        toDate: r.date,
       })
     }
     start = r.mileage
