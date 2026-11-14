@@ -2,7 +2,7 @@ import { ChevronRight, ClipboardList, Wrench } from "lucide-react"
 import Link from "next/link"
 import { cn } from "cn"
 
-import { formatDays, formatKm } from "@/lib/format"
+import { describeDue } from "@/lib/maintenance/describe"
 import type { MaintenanceItem, MaintenanceStatus } from "@/lib/maintenance/plan"
 import { dashboardCardClass } from "./card-styles"
 
@@ -20,25 +20,6 @@ const STATUS_LABEL: Record<Exclude<MaintenanceStatus, "no_data">, string> = {
   ok: "On track",
 }
 
-/** Текст під назвою роботи: колір крапки — не єдиний носій статусу. */
-function describe(item: MaintenanceItem, today: string): string {
-  const { remainingKm, daysLeft, status, dueDateByTime } = item
-
-  if (status === "overdue") {
-    if (remainingKm != null && remainingKm < 0) return `${formatKm(-remainingKm)} overdue`
-    // прострочено за часом: nextDate ≤ dueDateByTime < today, тож daysLeft від'ємний
-    if (dueDateByTime && dueDateByTime < today && daysLeft != null && daysLeft < 0) {
-      return `${formatDays(-daysLeft)} overdue`
-    }
-    return "Due now"
-  }
-
-  if (remainingKm != null) {
-    const km = `in ${formatKm(remainingKm)}`
-    return status === "soon" && daysLeft != null ? `${km} (~${formatDays(daysLeft)})` : km
-  }
-  return daysLeft != null ? `due in ${formatDays(daysLeft)}` : "Scheduled"
-}
 
 export function UpcomingMaintenance({ plan, today }: { plan: MaintenanceItem[]; today: string }) {
   const tracked = plan.filter((i) => i.status !== "no_data")
@@ -96,7 +77,7 @@ export function UpcomingMaintenance({ plan, today }: { plan: MaintenanceItem[]; 
                       {item.name}
                       <span className="sr-only"> — {STATUS_LABEL[status]}</span>
                     </p>
-                    <p className="text-sm text-[#5B6475] 2xl:mt-0.5 2xl:text-base 3xl:mt-1 3xl:text-lg 4xl:text-xl">{describe(item, today)}</p>
+                    <p className="text-sm text-[#5B6475] 2xl:mt-0.5 2xl:text-base 3xl:mt-1 3xl:text-lg 4xl:text-xl">{describeDue(item, today)}</p>
                   </div>
                   {status === "overdue" && (
                     <span aria-hidden className="shrink-0 rounded-full bg-[#FDECEC] px-2.5 py-1 text-[13px] font-semibold text-[#DC2626] 2xl:px-3 2xl:text-sm 3xl:px-4 3xl:py-1.5 3xl:text-base 4xl:text-lg">

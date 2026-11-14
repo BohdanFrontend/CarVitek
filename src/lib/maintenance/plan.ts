@@ -121,6 +121,14 @@ const byDateThenMileage = (a: MileagePoint, b: MileagePoint) =>
  * null, якщо й по всій історії проміжок < 14 днів або пробіг не зріс.
  */
 export function averageKmPerDay(entries: MileagePoint[], today: ISODate): number | null {
+  return averageKmPerDayDetailed(entries, today)?.kmPerDay ?? null
+}
+
+/** Те саме, що averageKmPerDay, але з позначкою, за який період пораховано. */
+export function averageKmPerDayDetailed(
+  entries: MileagePoint[],
+  today: ISODate
+): { kmPerDay: number; basis: "last90days" | "allHistory" } | null {
   const sorted = entries.filter((e) => e.date <= today).sort(byDateThenMileage)
   const from = toISODate(subDays(fromISODate(today), WINDOW_DAYS))
 
@@ -134,11 +142,11 @@ export function averageKmPerDay(entries: MileagePoint[], today: ISODate): number
   }
 
   const window = rate(sorted.filter((e) => e.date >= from))
-  if (window) return Math.max(0, window.distance) / window.days
+  if (window) return { kmPerDay: Math.max(0, window.distance) / window.days, basis: "last90days" }
 
   const all = rate(sorted)
   if (!all || all.distance <= 0) return null
-  return all.distance / all.days
+  return { kmPerDay: all.distance / all.days, basis: "allHistory" }
 }
 
 export type PlanType = {
@@ -217,4 +225,43 @@ export function buildMaintenancePlan({
     if (b.nextDate == null) return -1
     return a.nextDate < b.nextDate ? -1 : 1
   })
+}
+
+/**
+ * Частка пройденого інтервалу (0…1) для прогрес-бару: більша з часток за пробігом
+ * і за часом. null — немає попереднього виконання.
+ */
+export function intervalProgress(
+  item: Pick<MaintenanceItem, "last" | "intervalKm" | "intervalMonths">,
+  currentMileage: number,
+  today: ISODate
+): number | null {
+  if (!item.last) return null
+  const parts: number[] = []
+  if (item.intervalKm) parts.push((currentMileage - item.last.mileage) / item.intervalKm)
+  if (item.intervalMonths) {
+    const start = fromISODate(item.last.date)
+    const total = differenceInCalendarDays(addMonths(start, item.intervalMonths), start)
+    parts.push(differenceInCalendarDays(fromISODate(today), start) / total)
+  }
+  if (!parts.length) return null
+  return Math.min(1, Math.max(0, ...parts))
+}
+
+/**
+ * Оцінка стану ТО авто для кругового індикатора:
+ * round(100 · (ok + 0.5 · soon) / кількість робіт з історією); null — історії немає.
+ */
+export function healthScore(plan: Pick<MaintenanceItem, "status">[]): number | null {
+  const tracked = plan.filter((i) => i.status !== "no_data")
+  if (!tracked.length) return null
+  const ok = tracked.filter((i) => i.status === "ok").length
+  const soon = tracked.filter((i) => i.status === "soon").length
+  return Math.round((100 * (ok + 0.5 * soon)) / tracked.length)
+}
+
+/** Підсумок плану: скільки робіт у кожному статусі. */
+export function planSummary(plan: Pick<MaintenanceItem, "status">[]) {
+  const count = (s: MaintenanceStatus) => plan.filter((i) => i.status === s).length
+  return { overdue: count("overdue"), soon: count("soon"), ok: count("ok"), noData: count("no_data") }
 }

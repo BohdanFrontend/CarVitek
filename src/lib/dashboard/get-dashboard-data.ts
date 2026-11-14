@@ -18,7 +18,7 @@ import { createClient } from "@/lib/supabase/server"
 const MONTHS = 8
 
 /** Історія пробігу авто (кешується в межах запиту: потрібна і плану, і статистиці). */
-const getMileageEntries = cache(async (carId: string): Promise<MileagePoint[]> => {
+export const getMileageEntries = cache(async (carId: string): Promise<MileagePoint[]> => {
   const supabase = await createClient()
   const { data, error } = await supabase
     .from("mileage_entries")
