@@ -6,6 +6,8 @@ import { PageTitle } from "@/components/app-shell/page-title"
 import { AddCarButton, CarCard } from "@/components/cars/car-card"
 import { getActiveCar } from "@/lib/cars/active-car"
 import { getCarPhotoUrls } from "@/lib/cars/photos"
+import { getMaintenancePlan } from "@/lib/dashboard/get-dashboard-data"
+import { healthScore } from "@/lib/maintenance/plan"
 
 export const metadata: Metadata = { title: "My Garage" }
 
@@ -21,13 +23,17 @@ export default async function GaragePage() {
     )
   }
 
-  const photoUrls = await getCarPhotoUrls(cars.map((c) => c.photo_path))
+  // План ТО кожного авто (кешується за id) — для кругового індикатора стану
+  const [photoUrls, plans] = await Promise.all([
+    getCarPhotoUrls(cars.map((c) => c.photo_path)),
+    Promise.all(cars.map((c) => getMaintenancePlan(c.id))),
+  ])
 
   return (
     <div>
       <PageTitle>My Garage</PageTitle>
       <div className="mt-6 grid gap-5 md:grid-cols-2 lg:gap-6 xl:grid-cols-3">
-        {cars.map((car) => (
+        {cars.map((car, i) => (
           <CarCard
             key={car.id}
             active={car.id === activeCar?.id}
@@ -39,6 +45,7 @@ export default async function GaragePage() {
               engine_type: car.engine_type,
               current_mileage: car.current_mileage,
               photoUrl: car.photo_path ? (photoUrls.get(car.photo_path) ?? null) : null,
+              health: healthScore(plans[i]),
             }}
           />
         ))}

@@ -29,6 +29,7 @@ import {
 import type { EngineType } from "@/lib/cars/format"
 import { carName, formatMileage } from "@/lib/cars/format"
 import { EngineBadge } from "./engine-badge"
+import { HealthRing } from "./health-ring"
 
 export type GarageCar = {
   id: string
@@ -38,6 +39,8 @@ export type GarageCar = {
   engine_type: EngineType
   current_mileage: number
   photoUrl: string | null
+  /** Оцінка стану ТО (0–100); null — робіт з історією ще немає */
+  health: number | null
 }
 
 /** Біла картка з тінню як у картки входу. */
@@ -118,12 +121,17 @@ export function CarCard({ car, active }: { car: GarageCar; active: boolean }) {
           {actionsMenu("-mt-1 -mr-1.5 grid size-9 shrink-0 rounded-full hover:bg-[#F1F4F9] lg:hidden")}
         </div>
         <p className="hidden text-base text-[#5B6475] lg:mt-0.5 lg:block">{car.year ?? "—"}</p>
-        <div className="mt-2 flex items-center justify-between gap-3 lg:mt-4">
+        <div className="mt-2 flex items-center gap-3 lg:mt-4">
           <EngineBadge type={car.engine_type} className="lg:h-8 lg:px-3 lg:text-sm" />
           <span className="inline-flex items-center gap-1.5 text-[15px] font-semibold text-[#0B1220] lg:text-[17px]">
             <Gauge className="size-4 text-[#5B6475] lg:size-[18px]" aria-hidden />
             {formatMileage(car.current_mileage)}
           </span>
+          {car.health != null && (
+            <span className="-my-2 ml-auto">
+              <HealthRing score={car.health} />
+            </span>
+          )}
         </div>
       </div>
 
