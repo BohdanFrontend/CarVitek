@@ -4,6 +4,8 @@ type LogoProps = {
   className?: string
   /** sm — компактний, md — шапка мобільних екранів входу (~50% ширини, max ~207px), lg — ліва панель */
   size?: "sm" | "md" | "lg"
+  /** default — для світлого фону; light — для темного (бічне меню): «Car» білий, «Vitex» і дуга #3B82F6 */
+  variant?: "default" | "light"
 }
 
 const SIZES = {
@@ -28,7 +30,9 @@ const SIZES = {
  * У viewBox 1000 од. = ширина слова, висота великих літер ≈ 176 од.:
  * основна лінія 12 од. (≈7%), тонка 5 од. (≈3%).
  */
-export function Logo({ className, size = "sm" }: LogoProps) {
+export function Logo({ className, size = "sm", variant = "default" }: LogoProps) {
+  const light = variant === "light"
+
   return (
     <div
       className={cn(
@@ -41,7 +45,10 @@ export function Logo({ className, size = "sm" }: LogoProps) {
     >
       <svg
         viewBox="0 0 1000 146"
-        className="block h-auto w-0 min-w-full text-[#1766F2]"
+        className={cn(
+          "block h-auto w-0 min-w-full",
+          light ? "text-[#3B82F6]" : "text-[#1766F2]"
+        )}
         fill="none"
         stroke="currentColor"
         strokeLinecap="round"
@@ -56,8 +63,14 @@ export function Logo({ className, size = "sm" }: LogoProps) {
         {/* лінія вікон: від «V» до «e», ~45% ширини слова */}
         <path d="M440 38 C590 46 740 80 880 128" strokeWidth="5" />
       </svg>
-      <span aria-hidden className="block leading-[0.73] whitespace-nowrap text-[#0B1220]">
-        Car<span className="text-[#1766F2]">Vitex</span>
+      <span
+        aria-hidden
+        className={cn(
+          "block leading-[0.73] whitespace-nowrap",
+          light ? "text-white" : "text-[#0B1220]"
+        )}
+      >
+        Car<span className={light ? "text-[#3B82F6]" : "text-[#1766F2]"}>Vitex</span>
       </span>
     </div>
   )
