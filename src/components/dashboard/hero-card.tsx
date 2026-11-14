@@ -65,11 +65,10 @@ export function HeroCard({ car, photoUrl, avgConsumption }: HeroCardProps) {
             <Chip icon={electric ? Zap : Fuel} iconClassName={electric ? "text-[#15803D]" : undefined}>
               {ENGINE_LABELS[car.engine_type]}
             </Chip>
-            {!electric && (
-              <Chip icon={Droplets}>
-                Avg {avgConsumption != null ? avgConsumption.toFixed(1) : "—"} L/100 km
-              </Chip>
-            )}
+            {/* Для електро — енергоспоживання з журналу зарядок (той самий розрахунок) */}
+            <Chip icon={electric ? Zap : Droplets}>
+              Avg {avgConsumption != null ? avgConsumption.toFixed(1) : "—"} {electric ? "kWh" : "L"}/100 km
+            </Chip>
           </ul>
 
           <div className="mt-4 lg:mt-6 2xl:mt-8 3xl:mt-10">

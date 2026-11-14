@@ -1,3 +1,4 @@
+import Link from "next/link"
 import type { ReactNode } from "react"
 import { cn } from "cn"
 
@@ -15,10 +16,12 @@ type StatCardProps = {
   chartLabel?: string
   /** Підказка для порожнього стану */
   emptyHint: string
+  /** Куди перейти, щоб додати дані (порожній стан) */
+  emptyAction?: { href: string; label: string }
 }
 
 /** Картка показника: назва, значення ліворуч, міні-графік праворуч. */
-export function StatCard({ title, value, sub, chart, chartLabel, emptyHint }: StatCardProps) {
+export function StatCard({ title, value, sub, chart, chartLabel, emptyHint, emptyAction }: StatCardProps) {
   const empty = value == null
 
   return (
@@ -33,6 +36,15 @@ export function StatCard({ title, value, sub, chart, chartLabel, emptyHint }: St
         <div className="mt-2 2xl:mt-3 3xl:mt-4">
           <p className="text-xl font-bold text-[#8A93A3] 2xl:text-2xl 3xl:text-[28px] 4xl:text-[32px]">No data yet</p>
           <p className="mt-1 text-sm text-[#5B6475] 2xl:text-[15px] 3xl:text-lg 4xl:text-xl">{emptyHint}</p>
+          {emptyAction && (
+            <Link
+              href={emptyAction.href}
+              className="mt-2 inline-flex items-center gap-1 rounded text-sm font-semibold text-[#1766F2] outline-none hover:underline focus-visible:ring-3 focus-visible:ring-[#1766F2]/30 2xl:text-[15px] 3xl:text-lg"
+            >
+              {emptyAction.label}
+              <span aria-hidden>→</span>
+            </Link>
+          )}
         </div>
       ) : (
         <div className="mt-auto flex items-end justify-between gap-4 pt-2">

@@ -50,14 +50,17 @@ export default async function DashboardPage() {
           chart={<SparklineBars values={data.monthlySeries.map((m) => m.total)} color="#5B8DEF" />}
           chartLabel="Monthly spending over the last 8 months"
           emptyHint="Add fuel, service or expense records"
+          emptyAction={{ href: "/expenses?tab=records", label: "Add expense" }}
         />
         <StatCard
-          title="Fuel consumption"
+          title={electric ? "Energy consumption" : "Fuel consumption"}
           value={
-            !electric && data.avgConsumption != null ? (
+            data.avgConsumption != null ? (
               <>
                 {data.avgConsumption.toFixed(1)}
-                <span className="ml-1.5 text-lg font-semibold 3xl:text-2xl 4xl:text-[28px]">L/100 km</span>
+                <span className="ml-1.5 text-lg font-semibold 3xl:text-2xl 4xl:text-[28px]">
+                  {electric ? "kWh" : "L"}/100 km
+                </span>
               </>
             ) : null
           }
@@ -66,12 +69,11 @@ export default async function DashboardPage() {
               <SparklineLine values={data.consumptionSeries} color="#10B981" />
             ) : undefined
           }
-          chartLabel="Fuel consumption for recent full-tank refills"
+          chartLabel={`${electric ? "Energy" : "Fuel"} consumption for recent full-to-full segments`}
           emptyHint={
-            electric
-              ? "Fuel consumption isn't tracked for electric cars"
-              : "Add at least two full-tank fuel records"
+            electric ? "Add at least two full charges" : "Add at least two full-tank fuel records"
           }
+          emptyAction={{ href: "/fuel", label: electric ? "Open charging log" : "Open fuel log" }}
         />
         <StatCard
           title="Cost per 1 km"
@@ -80,6 +82,7 @@ export default async function DashboardPage() {
           chart={<SparklineBars values={data.costPerKmSeries} color="#8B5CF6" />}
           chartLabel="Cost per kilometre by month over the last 8 months"
           emptyHint="Add expenses and keep your mileage up to date"
+          emptyAction={{ href: "/expenses", label: "Open expenses" }}
         />
       </div>
     </div>

@@ -55,7 +55,7 @@ export function UpcomingMaintenance({ plan, today }: { plan: MaintenanceItem[]; 
             Add your last service to get maintenance forecasts
           </p>
           <Link
-            href="/service-log"
+            href="/service-log/new"
             className="mt-4 inline-flex h-10 items-center rounded-[10px] bg-[#1766F2] px-4 text-sm font-semibold text-white transition-colors outline-none hover:bg-[#0F55D6] focus-visible:ring-3 focus-visible:ring-[#1766F2]/40"
           >
             Add service record
