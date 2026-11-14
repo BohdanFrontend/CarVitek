@@ -6,7 +6,7 @@ import { Logo } from "@/components/brand/logo"
 import { Button } from "@/components/ui/button"
 import { createClient } from "@/lib/supabase/server"
 
-export const metadata: Metadata = { title: "Головна" }
+export const metadata: Metadata = { title: "Dashboard" }
 
 /** Тимчасова головна: перевірка, що вхід працює. Замінимо на дашборд з макета. */
 export default async function DashboardPage() {
@@ -25,13 +25,13 @@ export default async function DashboardPage() {
   return (
     <main className="mx-auto flex min-h-svh max-w-xl flex-col items-center justify-center gap-6 px-4 text-center">
       <Logo />
-      <h1 className="text-3xl font-bold tracking-tight">Вітаємо, {name}!</h1>
+      <h1 className="text-3xl font-bold tracking-tight">Welcome, {name}!</h1>
       <p className="text-muted-foreground">
-        Вхід працює. Довідник містить {count ?? 0} типових робіт ТО — база даних підключена.
+        You&apos;re signed in. The catalog has {count ?? 0} standard maintenance tasks — the database is connected.
       </p>
       <form action={signOut}>
         <Button type="submit" variant="outline" className="h-10 px-5">
-          Вийти
+          Log out
         </Button>
       </form>
     </main>

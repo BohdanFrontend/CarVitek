@@ -42,7 +42,8 @@ export function AuthField({
       </Label>
       <div className="relative">
         <Icon
-          className="pointer-events-none absolute top-1/2 left-3.5 size-5 -translate-y-1/2 text-muted-foreground"
+          className="pointer-events-none absolute top-1/2 left-4 size-5 -translate-y-1/2 text-[#0B1220] lg:size-6"
+          strokeWidth={1.75}
           aria-hidden
         />
         <Input
@@ -55,17 +56,24 @@ export function AuthField({
           autoFocus={autoFocus}
           aria-invalid={hasError || undefined}
           aria-describedby={hasError ? errorId : undefined}
-          className={cn("h-12 rounded-xl pl-11 text-base md:text-base", isPassword && "pr-11")}
+          className={cn(
+            // мобільний: 52px, радіус 14px, текст 16px (не менше 16px — інакше iOS зумить)
+            "h-[52px] rounded-[14px] border-[#D9E2F0] bg-[#F8FAFF] pr-4 pl-12 text-base text-[#0B1220] placeholder:text-[#6B7280] focus-visible:border-[#1766F2] focus-visible:ring-[3px] focus-visible:ring-[rgba(23,102,242,0.2)] md:text-base",
+            // десктоп
+            "lg:h-16 lg:rounded-[12px] lg:border-[#D9DEE7] lg:bg-white lg:pl-14 lg:text-[18px] lg:placeholder:text-[#5B6475] xl:h-[68px]",
+            "aria-invalid:border-destructive aria-invalid:focus-visible:ring-destructive/20",
+            isPassword && "pr-14"
+          )}
         />
         {isPassword && (
           <button
             type="button"
             onClick={() => setVisible((v) => !v)}
-            className="absolute top-1/2 right-2 grid size-8 -translate-y-1/2 place-items-center rounded-md text-muted-foreground transition-colors hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
-            aria-label={visible ? "Приховати пароль" : "Показати пароль"}
+            className="absolute top-1/2 right-1.5 grid size-11 -translate-y-1/2 lg:right-3 lg:size-10 place-items-center rounded-lg text-[#5B6475] transition-colors hover:text-[#0B1220] focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+            aria-label={visible ? "Hide password" : "Show password"}
             aria-pressed={visible}
           >
-            {visible ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+            {visible ? <EyeOff className="size-5" /> : <Eye className="size-5" />}
           </button>
         )}
       </div>

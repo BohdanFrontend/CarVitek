@@ -1,12 +1,22 @@
 "use client"
 
-import { Loader2, Lock, Mail } from "lucide-react"
+import { Lock, Mail } from "lucide-react"
 import Link from "next/link"
 import { useActionState } from "react"
 
 import { AuthField } from "@/components/auth/auth-field"
+import {
+  authCardClass,
+  authDividerClass,
+  authDividerLineClass,
+  authFooterClass,
+  authFooterLinkClass,
+  authFormClass,
+  authLinkClass,
+  authLinkRowClass,
+} from "@/components/auth/auth-styles"
+import { AuthSubmit } from "@/components/auth/auth-submit"
 import { FormAlert } from "@/components/auth/form-alert"
-import { Button } from "@/components/ui/button"
 import { signIn, type AuthFormState } from "../actions"
 
 const initialState: AuthFormState = { status: "idle" }
@@ -15,60 +25,58 @@ export function LoginForm({ next, linkError }: { next?: string; linkError?: bool
   const [state, formAction, pending] = useActionState(signIn, initialState)
 
   return (
-    <form action={formAction} className="grid gap-4" noValidate>
-      {linkError && state.status === "idle" && (
-        <FormAlert
-          status="error"
-          message="Посилання з листа недійсне або застаріло. Спробуйте ще раз."
+    <div className={authCardClass}>
+      <form action={formAction} className={authFormClass} noValidate>
+        {linkError && state.status === "idle" && (
+          <FormAlert
+            status="error"
+            message="This email link is invalid or has expired. Please try again."
+          />
+        )}
+        {state.status === "error" && <FormAlert status="error" message={state.message} />}
+
+        {next && <input type="hidden" name="next" value={next} />}
+
+        <AuthField
+          name="email"
+          type="email"
+          label="Email address"
+          icon={Mail}
+          autoComplete="email"
+          defaultValue={state.values?.email}
+          errors={state.fieldErrors?.email}
+          autoFocus
         />
-      )}
-      {state.status === "error" && <FormAlert status="error" message={state.message} />}
+        <AuthField
+          name="password"
+          type="password"
+          label="Password"
+          icon={Lock}
+          autoComplete="current-password"
+          errors={state.fieldErrors?.password}
+        />
 
-      {next && <input type="hidden" name="next" value={next} />}
+        <AuthSubmit pending={pending}>Log in</AuthSubmit>
+      </form>
 
-      <AuthField
-        name="email"
-        type="email"
-        label="Email"
-        icon={Mail}
-        autoComplete="email"
-        defaultValue={state.values?.email}
-        errors={state.fieldErrors?.email}
-        autoFocus
-      />
-      <AuthField
-        name="password"
-        type="password"
-        label="Пароль"
-        icon={Lock}
-        autoComplete="current-password"
-        errors={state.fieldErrors?.password}
-      />
-
-      <Button type="submit" disabled={pending} className="mt-2 h-12 rounded-xl text-base">
-        {pending && <Loader2 className="animate-spin" aria-hidden />}
-        Увійти
-      </Button>
-
-      <Link
-        href="/forgot-password"
-        className="justify-self-center rounded text-sm font-medium text-primary hover:underline focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
-      >
-        Забули пароль?
-      </Link>
-
-      <div className="my-2 flex items-center gap-4 text-sm text-muted-foreground">
-        <span className="h-px flex-1 bg-border" />
-        або
-        <span className="h-px flex-1 bg-border" />
+      <div className={authLinkRowClass}>
+        <Link href="/forgot-password" className={authLinkClass}>
+          Forgot password?
+        </Link>
       </div>
 
-      <p className="text-center text-sm text-muted-foreground">
-        Ще немає акаунта?{" "}
-        <Link href="/register" className="font-semibold text-primary hover:underline">
-          Зареєструватися
+      <div className={authDividerClass}>
+        <span className={authDividerLineClass} />
+        or
+        <span className={authDividerLineClass} />
+      </div>
+
+      <p className={authFooterClass}>
+        Don&apos;t have an account?{" "}
+        <Link href="/register" className={authFooterLinkClass}>
+          Sign up
         </Link>
       </p>
-    </form>
+    </div>
   )
 }

@@ -16,13 +16,13 @@ export function FormAlert({
     <div
       role={status === "error" ? "alert" : "status"}
       className={cn(
-        "flex items-start gap-2.5 rounded-xl border px-3.5 py-3 text-sm",
+        "flex items-start gap-3 rounded-[12px] border px-4 py-3.5 text-[15px] leading-snug",
         status === "error"
-          ? "border-destructive/30 bg-destructive/5 text-destructive"
-          : "border-emerald-600/25 bg-emerald-50 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300"
+          ? "border-destructive/25 bg-destructive/5 text-destructive"
+          : "border-emerald-600/20 bg-emerald-50 text-emerald-800"
       )}
     >
-      <Icon className="mt-0.5 size-4 shrink-0" aria-hidden />
+      <Icon className="mt-px size-5 shrink-0" aria-hidden />
       <p>{message}</p>
     </div>
   )

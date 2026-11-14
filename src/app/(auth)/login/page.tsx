@@ -3,7 +3,7 @@ import type { Metadata } from "next"
 import { AuthHeader } from "@/components/auth/auth-header"
 import { LoginForm } from "./login-form"
 
-export const metadata: Metadata = { title: "Вхід" }
+export const metadata: Metadata = { title: "Log in" }
 
 export default async function LoginPage({ searchParams }: PageProps<"/login">) {
   const params = await searchParams
@@ -12,7 +12,7 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
 
   return (
     <>
-      <AuthHeader title="З поверненням" subtitle="Увійдіть у свій акаунт" />
+      <AuthHeader title="Welcome back" subtitle="Sign in to your account" />
       <LoginForm next={next} linkError={linkError} />
     </>
   )

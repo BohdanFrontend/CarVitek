@@ -85,7 +85,7 @@ export async function signUp(
   if (data.user && data.user.identities?.length === 0) {
     return {
       status: "error",
-      message: "Користувач із таким email уже зареєстрований.",
+      message: "An account with this email already exists.",
       values,
     }
   }
@@ -98,7 +98,7 @@ export async function signUp(
 
   return {
     status: "success",
-    message: `Ми надіслали лист на ${email}. Перейдіть за посиланням у ньому, щоб підтвердити акаунт.`,
+    message: `We've sent an email to ${email}. Follow the link in it to confirm your account.`,
   }
 }
 
@@ -122,7 +122,7 @@ export async function requestPasswordReset(
   // Не кажемо, чи існує акаунт, щоб не розкривати зареєстровані адреси
   return {
     status: "success",
-    message: "Якщо акаунт із цим email існує, ми надіслали на нього посилання для зміни пароля.",
+    message: "If an account with this email exists, we've sent it a password reset link.",
   }
 }
 

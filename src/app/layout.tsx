@@ -1,4 +1,4 @@
-import type { Metadata } from "next"
+import type { Metadata, Viewport } from "next"
 import { Geist_Mono, Inter } from "next/font/google"
 import "./globals.css"
 
@@ -13,18 +13,24 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 })
 
+// viewportFit "cover" — щоб env(safe-area-inset-*) працювали на iPhone з «чубчиком»
+export const viewport: Viewport = {
+  themeColor: "#F5F9FF",
+  viewportFit: "cover",
+}
+
 export const metadata: Metadata = {
   title: {
-    default: "CarVitex — сервісна книжка автомобіля",
+    default: "CarVitex — your car's service book",
     template: "%s · CarVitex",
   },
   description:
-    "Облік обслуговування, заправок і витрат на авто з автоматичним плануванням ТО за пробігом і часом.",
+    "Track your car's maintenance, fuel-ups and expenses, with service reminders scheduled automatically by mileage and time.",
 }
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="uk" className={`${inter.variable} ${geistMono.variable} h-full antialiased`}>
+    <html lang="en" className={`${inter.variable} ${geistMono.variable} h-full antialiased`}>
       <body className="flex min-h-full flex-col font-sans">{children}</body>
     </html>
   )

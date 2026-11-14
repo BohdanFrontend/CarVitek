@@ -1,12 +1,12 @@
 import { cn } from "cn"
 
 /**
- * Узагальнена ілюстрація хетчбека для екранів входу/реєстрації.
- * Пізніше її можна замінити власним фото (next/image).
+ * Узагальнена ілюстрація хетчбека — запасний варіант, коли немає
+ * фото public/auth-car.webp. Тінь під колесами малює батьківський контейнер.
  */
 export function CarIllustration({ className }: { className?: string }) {
   return (
-    <svg viewBox="0 0 400 170" className={cn("w-full", className)} aria-hidden>
+    <svg viewBox="0 0 400 145" className={cn("block w-full", className)} aria-hidden>
       <defs>
         <linearGradient id="cv-body" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0" stopColor="#5b6b82" />
@@ -17,9 +17,6 @@ export function CarIllustration({ className }: { className?: string }) {
           <stop offset="1" stopColor="#93c5fd" />
         </linearGradient>
       </defs>
-
-      {/* тінь */}
-      <ellipse cx="200" cy="146" rx="170" ry="10" fill="#1e3a8a" opacity="0.12" />
 
       {/* кузов */}
       <path
