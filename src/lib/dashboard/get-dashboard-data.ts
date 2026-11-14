@@ -4,7 +4,7 @@ import { cache } from "react"
 import { getUserCars, type Car } from "@/lib/cars/active-car"
 import { fromISODate, todayInKyiv } from "@/lib/dates"
 import { averageConsumption, fuelSegments } from "@/lib/fuel/consumption"
-import { maintenanceName } from "@/lib/maintenance/names"
+import { getMaintenanceTypes } from "@/lib/maintenance/types"
 import {
   averageKmPerDay,
   buildMaintenancePlan,
@@ -39,9 +39,7 @@ export const getMaintenancePlan = cache(async (carId: string): Promise<Maintenan
   const supabase = await createClient()
 
   const [types, rules, items, mileageEntries] = await Promise.all([
-    supabase
-      .from("maintenance_types")
-      .select("id, code, name, interval_km, interval_months, engine_types, sort_order"),
+    getMaintenanceTypes(),
     supabase
       .from("car_maintenance_rules")
       .select("maintenance_type_id, interval_km, interval_months, is_enabled")
@@ -53,7 +51,7 @@ export const getMaintenancePlan = cache(async (carId: string): Promise<Maintenan
       .eq("service_records.car_id", carId),
     getMileageEntries(carId),
   ])
-  for (const r of [types, rules, items]) {
+  for (const r of [rules, items]) {
     if (r.error) throw new Error(`Failed to load maintenance data: ${r.error.message}`)
   }
 
@@ -73,7 +71,7 @@ export const getMaintenancePlan = cache(async (carId: string): Promise<Maintenan
 
   return buildMaintenancePlan({
     car,
-    types: (types.data ?? []).map((t) => ({ ...t, name: maintenanceName(t.code, t.name) })),
+    types,
     rules: rules.data ?? [],
     lastByType,
     mileageEntries,
