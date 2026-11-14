@@ -77,6 +77,7 @@ export default async function DashboardPage() {
         />
         <StatCard
           title="Cost per 1 km"
+          sub={<span className="font-normal text-[#5B6475]">Last 8 months</span>}
           // без витрат «₴ 0.00» вводить в оману — показуємо порожній стан
           value={hasSpending && data.costPerKm != null ? formatMoney(data.costPerKm) : null}
           chart={<SparklineBars values={data.costPerKmSeries} color="#8B5CF6" />}
