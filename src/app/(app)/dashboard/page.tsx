@@ -23,7 +23,7 @@ export default async function DashboardPage() {
     .select("*", { count: "exact", head: true })
 
   return (
-    <main className="mx-auto flex min-h-svh max-w-xl flex-col items-center justify-center gap-6 px-4 text-center">
+    <div className="mx-auto flex min-h-[60svh] max-w-xl flex-col items-center justify-center gap-6 px-4 text-center">
       <Logo />
       <h1 className="text-3xl font-bold tracking-tight">Welcome, {name}!</h1>
       <p className="text-muted-foreground">
@@ -34,6 +34,6 @@ export default async function DashboardPage() {
           Log out
         </Button>
       </form>
-    </main>
+    </div>
   )
 }
