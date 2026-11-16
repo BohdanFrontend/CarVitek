@@ -48,7 +48,7 @@ export function Field({
     </>
   )
   return (
-    <div className={cn("grid content-start gap-2", className)}>
+    <div className={cn("grid grid-cols-1 content-start gap-2", className)}>
       {asGroup ? (
         <span id={`${id}-label`} className="text-[15px] font-semibold text-[#0B1220]">
           {labelContent}

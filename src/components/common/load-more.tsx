@@ -26,7 +26,7 @@ export function LoadMore({
   query.set("limit", String(limit + PAGE_SIZE))
   return (
     <div className="mt-5 flex justify-center">
-      <Link href={`?${query}`} scroll={false} className={secondaryButtonClass}>
+      <Link href={`?${query}`} scroll={false} className={`${secondaryButtonClass} max-lg:h-12 max-lg:w-full max-lg:rounded-[14px]`}>
         Load more
       </Link>
     </div>

@@ -48,7 +48,8 @@ export async function getFuelLog(carId: string, limit: number) {
     total: records.length,
     hasMore: records.length > limit,
     average: averageConsumption(segments),
-    chart: segments.map((s) => ({ date: s.toDate ?? "", value: Math.round(s.lPer100km * 100) / 100 })),
+    /** Сегменти «від повного до повного» (для графіка за період) */
+    segments,
     /** Для попередження «пробіг менший за попередню заправку» у формі */
     history: records.map((r) => ({ id: r.id, date: r.filled_at, mileage: r.mileage })),
     totalSpent: records.reduce((s, r) => s + r.total_cost, 0),

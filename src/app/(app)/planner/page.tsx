@@ -88,7 +88,7 @@ export default async function PlannerPage({ searchParams }: PageProps<"/planner"
           }
         />
       ) : (
-        <ul className="grid gap-3 xl:grid-cols-2 xl:gap-4">
+        <ul className="grid grid-cols-1 gap-3 xl:grid-cols-2 xl:gap-4">
           {items.map((item) => (
             <PlanItemCard key={item.typeId} item={item} currentMileage={activeCar.current_mileage} today={today} />
           ))}

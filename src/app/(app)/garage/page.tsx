@@ -32,7 +32,7 @@ export default async function GaragePage() {
   return (
     <div>
       <PageTitle>My Garage</PageTitle>
-      <div className="mt-6 grid gap-5 md:grid-cols-2 lg:gap-6 xl:grid-cols-3">
+      <div className="mt-6 grid grid-cols-1 gap-5 md:grid-cols-2 lg:gap-6 xl:grid-cols-3">
         {cars.map((car, i) => (
           <CarCard
             key={car.id}

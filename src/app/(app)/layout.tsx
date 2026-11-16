@@ -42,8 +42,9 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
           activeCarId={activeCar?.id ?? null}
           alertCount={alertCount}
         />
-        {/* Нижній відступ на мобільному — під таб-панель (64px + safe area) */}
-        <main className="mx-auto w-full max-w-[1280px] flex-1 2xl:max-w-[1560px] 3xl:max-w-[1880px] 4xl:max-w-[2280px] px-4 pt-5 pb-[calc(64px+env(safe-area-inset-bottom)+24px)] lg:p-8 3xl:p-10 4xl:p-12">
+        {/* Нижній відступ на мобільному — під таб-панель (64px + safe area + 16px).
+            max-lg:overflow-x-clip — лише страховка на мобільному від переповнення (не створює скрол-контейнер, sticky працює) */}
+        <main className="mx-auto w-full min-w-0 max-w-[1280px] flex-1 max-lg:overflow-x-clip 2xl:max-w-[1560px] 3xl:max-w-[1880px] 4xl:max-w-[2280px] px-4 pt-5 pb-[calc(64px+env(safe-area-inset-bottom)+16px)] lg:p-8 3xl:p-10 4xl:p-12">
           {children}
         </main>
       </div>

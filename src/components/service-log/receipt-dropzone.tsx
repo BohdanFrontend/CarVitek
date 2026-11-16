@@ -131,7 +131,7 @@ export function ReceiptDropzone({
   }
 
   return (
-    <div className="grid gap-1.5">
+    <div className="grid grid-cols-1 gap-1.5">
       <label
         htmlFor={inputId}
         onDragOver={(e) => {

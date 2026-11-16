@@ -154,7 +154,7 @@ export function FuelRecordDialog({
   return (
     <Dialog open={open} onOpenChange={(o) => !pending && onOpenChange(o)}>
       <DialogContent className="max-h-[calc(100svh-32px)] overflow-y-auto rounded-[20px] sm:max-w-xl">
-        <form onSubmit={submit} noValidate className="grid gap-4">
+        <form onSubmit={submit} noValidate className="grid grid-cols-1 gap-4">
           <DialogHeader>
             <DialogTitle className="text-lg font-bold text-[#0B1220]">
               {record ? `Edit ${what}` : `Add ${what}`}
@@ -164,7 +164,7 @@ export function FuelRecordDialog({
             </DialogDescription>
           </DialogHeader>
 
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <Field id={fid("date")} label="Date" icon={CalendarDays} error={errors.filled_at}>
               <input
                 id={fid("date")}

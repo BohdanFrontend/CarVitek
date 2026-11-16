@@ -104,7 +104,7 @@ export function ExpenseRecords({
                     </td>
                     <td className={`${td} text-right font-semibold whitespace-nowrap`}>{formatMoney(r.amount)}</td>
                     <td className={`${td} whitespace-nowrap`}>{r.mileage != null ? formatKm(r.mileage) : <span className="text-[#8A93A3]">—</span>}</td>
-                    <td className={`${td} max-w-[280px] truncate text-[#5B6475]`} title={r.comment ?? undefined}>{r.comment ?? "—"}</td>
+                    <td className={`${td} text-[#5B6475]`}><div className="max-w-[280px] truncate" title={r.comment ?? undefined}>{r.comment ?? "—"}</div></td>
                     <td className={`${td} w-12`}>{actions(r)}</td>
                   </tr>
                 ))}
@@ -112,7 +112,7 @@ export function ExpenseRecords({
             </table>
           </div>
 
-          <ul className="grid gap-3 lg:hidden">
+          <ul className="grid grid-cols-1 gap-3 lg:hidden">
             {rows.map((r) => (
               <li key={r.id} className={cn(cardClass, "flex items-start gap-3 p-4")}>
                 <CategoryIcon category={r.category} />
@@ -183,14 +183,14 @@ function ExpenseDialog({ carId, record, onClose }: { carId: string; record: Expe
   return (
     <Dialog open onOpenChange={(o) => !o && !pending && onClose()}>
       <DialogContent className="max-h-[calc(100svh-32px)] overflow-y-auto rounded-[20px] sm:max-w-lg">
-        <form onSubmit={submit} noValidate className="grid gap-4">
+        <form onSubmit={submit} noValidate className="grid grid-cols-1 gap-4">
           <DialogHeader>
             <DialogTitle className="text-lg font-bold text-[#0B1220]">{record ? "Edit expense" : "Add expense"}</DialogTitle>
             <DialogDescription className="text-[15px] text-[#5B6475]">
               Fuel and services are added in their own logs.
             </DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <Field id={fid("date")} label="Date" icon={CalendarDays} error={errors.spent_at}>
               <input id={fid("date")} type="date" max={today} value={date} onChange={(e) => setDate(e.target.value)} disabled={pending} className={inputClass} {...fieldA11y(fid("date"), errors.spent_at)} />
             </Field>

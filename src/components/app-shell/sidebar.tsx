@@ -22,7 +22,7 @@ export function Sidebar() {
       </Link>
 
       <nav aria-label="Main" className="mt-10 3xl:mt-14 4xl:mt-16">
-        <ul className="grid gap-2 3xl:gap-3 4xl:gap-5">
+        <ul className="grid grid-cols-1 gap-2 3xl:gap-3 4xl:gap-5">
           {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
             const active = isActivePath(pathname, href)
             return (

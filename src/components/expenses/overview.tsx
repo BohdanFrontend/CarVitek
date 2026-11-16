@@ -82,10 +82,10 @@ export function ExpensesOverview({ data, period, today }: { data: Overview; peri
   const change = data.costPerKmChange
 
   return (
-    <div className="grid gap-4 lg:gap-6">
+    <div className="grid grid-cols-1 gap-4 lg:gap-6">
       <PeriodControls period={period} label={data.label} today={today} />
 
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] lg:gap-6">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] lg:gap-6">
         {/* Розподіл за категоріями */}
         <section aria-labelledby="by-category" className={cn(cardClass, "p-5 lg:p-6")}>
           <h2 id="by-category" className="text-[17px] font-bold text-[#0B1220]">
@@ -101,9 +101,12 @@ export function ExpensesOverview({ data, period, today }: { data: Overview; peri
                   return (
                     <li key={c.category} className="flex items-center gap-3">
                       <CategoryIcon category={cat} size="sm" />
-                      <span className="flex-1 font-medium text-[#0B1220]">{CATEGORY_LABELS[cat]}</span>
-                      <span className="text-sm text-[#5B6475]">{formatMoney(c.total)}</span>
-                      <span className="w-11 text-right font-semibold text-[#0B1220]">{pct}%</span>
+                      {/* Мобільний: сума під назвою (рядок не ширший за картку); lg+ — в один рядок */}
+                      <span className="min-w-0 flex-1 lg:flex lg:items-center lg:gap-3">
+                        <span className="block truncate font-medium text-[#0B1220] lg:flex-1">{CATEGORY_LABELS[cat]}</span>
+                        <span className="block text-sm whitespace-nowrap text-[#5B6475]">{formatMoney(c.total)}</span>
+                      </span>
+                      <span className="w-11 shrink-0 text-right font-semibold text-[#0B1220]">{pct}%</span>
                     </li>
                   )
                 })}

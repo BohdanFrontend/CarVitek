@@ -34,7 +34,7 @@ export function HeroCard({ car, photoUrl, avgConsumption }: HeroCardProps) {
       aria-label={`${title}, current mileage ${formatKm(car.current_mileage)}`}
       className={cn(dashboardCardClass, "p-3 lg:p-5 2xl:p-7 3xl:p-9 4xl:p-11")}
     >
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] lg:gap-7 2xl:gap-9 3xl:gap-12">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] lg:gap-7 2xl:gap-9 3xl:gap-12">
         <div>
           <div className="relative aspect-video overflow-hidden rounded-[14px] bg-[#EAF1FE] lg:aspect-[4/3] 3xl:rounded-[18px]">
             {photoUrl ? (

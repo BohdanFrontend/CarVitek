@@ -77,7 +77,7 @@ export function MobileNav() {
           <SheetHeader className="px-1 pb-1">
             <SheetTitle className="text-lg font-bold text-[#0B1220]">More</SheetTitle>
           </SheetHeader>
-          <ul className="grid gap-1">
+          <ul className="grid grid-cols-1 gap-1">
             {MORE_ITEMS.map(({ href, label, icon: Icon }) => {
               const active = isActivePath(pathname, href)
               return (

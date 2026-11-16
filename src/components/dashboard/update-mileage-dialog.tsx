@@ -60,7 +60,7 @@ export function UpdateMileageDialog({ carId, currentMileage }: { carId: string; 
         Update mileage
       </DialogTrigger>
       <DialogContent className="rounded-[20px] sm:max-w-md">
-        <form onSubmit={submit} noValidate className="grid gap-4">
+        <form onSubmit={submit} noValidate className="grid grid-cols-1 gap-4">
           <DialogHeader>
             <DialogTitle className="text-lg font-bold text-[#0B1220]">Update mileage</DialogTitle>
             <DialogDescription className="text-[15px] text-[#5B6475]">
@@ -68,7 +68,7 @@ export function UpdateMileageDialog({ carId, currentMileage }: { carId: string; 
             </DialogDescription>
           </DialogHeader>
 
-          <div className="grid gap-2">
+          <div className="grid grid-cols-1 gap-2">
             <label htmlFor={inputId} className="text-[15px] font-semibold text-[#0B1220]">
               New mileage
             </label>

@@ -34,15 +34,15 @@ export default async function DashboardPage() {
       : null
 
   return (
-    <div className="grid gap-4 lg:gap-6 2xl:gap-8 3xl:gap-10 4xl:gap-12">
+    <div className="grid grid-cols-1 gap-4 lg:gap-6 2xl:gap-8 3xl:gap-10 4xl:gap-12">
       <h1 className="sr-only">Dashboard</h1>
 
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] lg:gap-6 2xl:gap-8 3xl:gap-10 4xl:gap-12">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] lg:gap-6 2xl:gap-8 3xl:gap-10 4xl:gap-12">
         <HeroCard car={activeCar} photoUrl={photoUrl} avgConsumption={data.avgConsumption} />
         <UpcomingMaintenance plan={data.plan} today={todayInKyiv()} />
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-3 lg:gap-6 2xl:gap-8 3xl:gap-10 4xl:gap-12">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3 lg:gap-6 2xl:gap-8 3xl:gap-10 4xl:gap-12">
         <StatCard
           title="Spent this month"
           value={hasSpending ? formatMoney(data.spentThisMonth) : null}

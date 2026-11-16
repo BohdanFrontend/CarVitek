@@ -17,6 +17,10 @@ export function formatMoney(amount: number, { decimals = 2 }: { decimals?: numbe
   return `${amount < 0 ? "−" : ""}${CURRENCY_SYMBOL}${NBSP}${value}`
 }
 
+/** Компактно для мобільних карток: копійки лише якщо вони є ("₴ 10 000", "₴ 1 250.50"). */
+export const formatMoneyShort = (amount: number) =>
+  formatMoney(amount, { decimals: Number.isInteger(Math.round(amount * 100) / 100) ? 0 : 2 })
+
 /** 93000 → "93 000 km" */
 export const formatKm = (km: number) => formatMileage(km)
 

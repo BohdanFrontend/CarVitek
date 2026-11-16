@@ -159,7 +159,7 @@ export function ServiceRecordForm({ userId, car, workTypes, stations, record, pr
       <PageTitle>{isEdit ? "Edit service record" : "Add service record"}</PageTitle>
       <p className="mt-1 text-[15px] text-[#5B6475]">{car.label}</p>
 
-      <div className="mt-6 grid gap-x-6 gap-y-5 md:grid-cols-2">
+      <div className="mt-6 grid grid-cols-1 gap-x-6 gap-y-5 md:grid-cols-2">
         <Field id={fid("date")} label="Date" icon={CalendarDays} error={errors.performed_at?.message}>
           <input
             id={fid("date")}
@@ -294,7 +294,7 @@ export function ServiceRecordForm({ userId, car, workTypes, stations, record, pr
           />
         </Field>
 
-        <div className="grid gap-2 md:col-span-2">
+        <div className="grid grid-cols-1 gap-2 md:col-span-2">
           <span className="text-[15px] font-semibold text-[#0B1220]">
             Receipt <span className="font-normal text-[#5B6475]">(optional)</span>
           </span>

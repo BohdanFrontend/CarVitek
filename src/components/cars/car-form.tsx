@@ -175,7 +175,7 @@ export function CarForm({ userId, car }: CarFormProps) {
     >
       <PageTitle>{isEdit ? "Edit car" : "Add a car"}</PageTitle>
 
-      <div className="mt-6 grid gap-x-6 gap-y-5 md:grid-cols-2">
+      <div className="mt-6 grid grid-cols-1 gap-x-6 gap-y-5 md:grid-cols-2">
         {/* Make — підказки популярних марок, але можна ввести будь-яку */}
         <Field id={fieldId("make")} label="Make" icon={CarFront} error={errors.make?.message}>
           <Controller
@@ -384,7 +384,7 @@ export function CarForm({ userId, car }: CarFormProps) {
           />
         </Field>
 
-        <div className="grid gap-2 md:col-span-2">
+        <div className="grid grid-cols-1 gap-2 md:col-span-2">
           <span className="text-[15px] font-semibold text-[#0B1220]">
             Upload photo <span className="font-normal text-[#5B6475]">(optional)</span>
           </span>

@@ -1,6 +1,7 @@
 "use client"
 
 import { Check, Fuel, Plus } from "lucide-react"
+import Link from "next/link"
 import { useState } from "react"
 import { cn } from "cn"
 
@@ -10,9 +11,10 @@ import { EmptyState } from "@/components/common/empty-state"
 import { PageHeader } from "@/components/common/page-header"
 import { RowActions } from "@/components/common/row-actions"
 import { formatDate } from "@/lib/dates"
-import { formatKm, formatMoney } from "@/lib/format"
+import type { ConsumptionPeriod } from "@/lib/fuel/consumption"
 import type { FuelRow } from "@/lib/fuel/queries"
-import { ConsumptionChart } from "./consumption-chart"
+import { formatKm, formatMoney } from "@/lib/format"
+import { ConsumptionCard, type ConsumptionStats } from "./consumption-card"
 import { FuelRecordDialog, type EditableFuelRecord } from "./fuel-record-dialog"
 
 type Props = {
@@ -22,24 +24,56 @@ type Props = {
   currentMileage: number
   rows: FuelRow[]
   total: number
-  average: number | null
-  chart: { date: string; value: number }[]
+  hasSegments: boolean
+  period: ConsumptionPeriod
+  stats: ConsumptionStats
   history: { id: string; date: string; mileage: number }[]
-  /** «Load more» (серверне посилання) */
+  /** «Load more» для мобільного списку (серверне посилання) */
   loadMore: React.ReactNode
+  /** Посилання «Load more» у підвалі таблиці (null — усе показано) */
+  nextLimitHref: string | null
 }
 
 const amount = (n: number) => n.toFixed(2).replace(/\.?0+$/, "")
 
-/** Журнал заправок: графік витрати, список і діалог додавання / редагування. */
-export function FuelLog({ carId, carLabel, unit, currentMileage, rows, total, average, chart, history, loadMore }: Props) {
+/** Квадрат «Full»: лише для показу, не інтерактивний. */
+function FullMark({ full, electric }: { full: boolean; electric: boolean }) {
+  const label = full ? (electric ? "Full charge" : "Full tank") : "Partial"
+  return full ? (
+    <span role="img" aria-label={label} className="inline-grid size-[22px] place-items-center rounded-[6px] bg-[#1766F2] text-white">
+      <Check className="size-4" strokeWidth={3} aria-hidden />
+    </span>
+  ) : (
+    <span role="img" aria-label={label} className="inline-block size-[22px] rounded-[6px] border-2 border-[#CBD5E1] bg-white" />
+  )
+}
+
+/**
+ * Журнал заправок за макетом «10. Fuel Log».
+ * Десктоп: таблиця (~55%) і картка графіка (~45%) поруч, однакової висоти.
+ * Мобільний: спочатку графік, під ним картки заправок.
+ */
+export function FuelLog({
+  carId,
+  carLabel,
+  unit,
+  currentMileage,
+  rows,
+  total,
+  hasSegments,
+  period,
+  stats,
+  history,
+  loadMore,
+  nextLimitHref,
+}: Props) {
   const electric = unit === "kWh"
   // ключ перемонтовує діалог, щоб форма щоразу починалась з потрібних значень
   const [dialog, setDialog] = useState<{ key: number; record: EditableFuelRecord | null } | null>(null)
   const open = (record: EditableFuelRecord | null) => setDialog({ key: Date.now(), record })
 
   const addButton = (
-    <button type="button" onClick={() => open(null)} className={primaryButtonClass}>
+    <button type="button" onClick={() => open(null)} className={cn(primaryButtonClass, "lg:h-12 lg:rounded-[14px] lg:px-6")}>
       <Plus className="size-5" aria-hidden />
       {electric ? "Add charging" : "Add refueling"}
     </button>
@@ -56,46 +90,13 @@ export function FuelLog({ carId, carLabel, unit, currentMileage, rows, total, av
     />
   )
 
-  const th = "px-3 py-3 text-left text-[13px] font-semibold text-[#5B6475] first:pl-6 last:pr-4"
-  const td = "px-3 py-3.5 align-middle whitespace-nowrap first:pl-6 last:pr-4"
+  const th = "h-14 px-3 text-sm font-bold whitespace-nowrap text-[#0B1220] first:pl-6 last:pr-3"
+  const td = "h-16 px-3 align-middle whitespace-nowrap tabular-nums first:pl-6 last:pr-3"
   const per100 = `${unit}/100 km`
 
   return (
     <div>
       <PageHeader title={electric ? "Charging Log" : "Fuel Log"} description={carLabel} action={addButton} />
-
-      {/* Картка витрати */}
-      <section aria-labelledby="consumption-title" className={cn(cardClass, "mb-5 p-5 lg:mb-6 lg:p-6")}>
-        <div className="flex flex-wrap items-end justify-between gap-3">
-          <div>
-            <h2 id="consumption-title" className="text-base font-bold text-[#0B1220] lg:text-[17px]">
-              {electric ? "Energy consumption" : "Fuel consumption"}, {per100}
-            </h2>
-            <p className="mt-1 text-[32px] leading-tight font-extrabold tracking-[-0.02em] text-[#0B1220]">
-              {average != null ? average.toFixed(1) : "—"}
-              <span className="ml-1.5 text-lg font-semibold">{per100}</span>
-            </p>
-          </div>
-          <p className="text-sm text-[#5B6475]">
-            Average for {chart.length} full-to-full {chart.length === 1 ? "segment" : "segments"}
-          </p>
-        </div>
-        {chart.length >= 2 ? (
-          <>
-            <div className="mt-4">
-              <ConsumptionChart data={chart} unit={unit} />
-            </div>
-            <p className="sr-only">
-              Consumption by segment: {chart.map((c) => `${formatDate(c.date)} ${c.value} ${per100}`).join("; ")}
-            </p>
-          </>
-        ) : (
-          <p className="mt-3 text-sm text-[#5B6475]">
-            Add at least {chart.length === 1 ? "one more" : "two"} {electric ? "full charges" : "full-tank refuelings"} to
-            see the consumption chart.
-          </p>
-        )}
-      </section>
 
       {total === 0 ? (
         <EmptyState
@@ -105,80 +106,101 @@ export function FuelLog({ carId, carLabel, unit, currentMileage, rows, total, av
           action={addButton}
         />
       ) : (
-        <>
-          {/* Десктоп */}
-          <div className={cn(cardClass, "hidden overflow-x-auto lg:block")}>
-            <table className="w-full min-w-[880px] text-[15px] text-[#0B1220]">
-              <thead className="border-b border-[#E5E9F0]">
-                <tr>
-                  <th scope="col" className={th}>Date</th>
-                  <th scope="col" className={th}>Mileage</th>
-                  <th scope="col" className={`${th} text-right`}>{electric ? "kWh" : "Liters"}</th>
-                  <th scope="col" className={`${th} text-right`}>Price/{unit}</th>
-                  <th scope="col" className={`${th} text-right`}>Total</th>
-                  <th scope="col" className={`${th} text-center`}>{electric ? "Full" : "Full tank"}</th>
-                  <th scope="col" className={th}>Station</th>
-                  <th scope="col" className={`${th} text-right`}>{per100}</th>
-                  <th scope="col" className={th}><span className="sr-only">Actions</span></th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[#EEF1F6]">
-                {rows.map((r) => (
-                  <tr key={r.id} className="hover:bg-[#FAFBFD]">
-                    <td className={td}>{formatDate(r.filled_at)}</td>
-                    <td className={td}>{formatKm(r.mileage)}</td>
-                    <td className={`${td} text-right`}>{amount(r.liters)}</td>
-                    <td className={`${td} text-right`}>{formatMoney(r.price_per_liter)}</td>
-                    <td className={`${td} text-right font-semibold`}>{formatMoney(r.total_cost)}</td>
-                    <td className={`${td} text-center`}>
-                      {r.is_full_tank ? (
-                        <Check className="mx-auto size-5 text-[#16A34A]" aria-label="Yes" />
-                      ) : (
-                        <span className="text-[#8A93A3]" aria-label="No">—</span>
-                      )}
-                    </td>
-                    <td className={`${td} max-w-[160px] truncate`}>{r.station ?? <span className="text-[#8A93A3]">—</span>}</td>
-                    <td className={`${td} text-right font-semibold`}>
-                      {r.consumption != null ? r.consumption.toFixed(1) : <span className="font-normal text-[#8A93A3]">—</span>}
-                    </td>
-                    <td className={`${td} w-12`}>{actions(r)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+        <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,55fr)_minmax(0,45fr)] lg:items-stretch">
+          {/* Графік: на мобільному — першим, на десктопі — праворуч */}
+          <div className="min-w-0 lg:order-2">
+            <ConsumptionCard unit={unit} period={period} stats={stats} hasSegments={hasSegments} onAdd={() => open(null)} />
           </div>
 
-          {/* Мобільний */}
-          <ul className="grid gap-3 lg:hidden">
-            {rows.map((r) => (
-              <li key={r.id} className={cn(cardClass, "p-4")}>
-                <div className="flex items-start gap-3">
-                  <div className="min-w-0 flex-1">
-                    <p className="font-semibold text-[#0B1220]">
-                      {amount(r.liters)} {unit} · {formatMoney(r.total_cost)}
-                    </p>
-                    <p className="mt-1 text-sm text-[#5B6475]">
-                      {formatDate(r.filled_at)} · {formatKm(r.mileage)}
-                      {r.station && <> · {r.station}</>}
-                    </p>
+          {/* Десктоп: таблиця */}
+          <section
+            aria-label={electric ? "Charging records" : "Refuelings"}
+            className="hidden min-w-0 flex-col rounded-[20px] border border-[#E5E9F0] bg-white shadow-[0_10px_40px_rgba(15,23,42,0.06)] lg:order-1 lg:flex"
+          >
+            <div className="overflow-x-auto">
+              <table className="w-full text-[15px] text-[#0B1220]">
+                <thead className="border-b border-[#EEF2F7]">
+                  <tr>
+                    <th scope="col" className={`${th} text-left`}>Date</th>
+                    <th scope="col" className={`${th} text-right`}>Mileage</th>
+                    <th scope="col" className={`${th} text-right`}>{electric ? "kWh" : "Liters"}</th>
+                    <th scope="col" className={`${th} text-right`}>Price</th>
+                    <th scope="col" className={`${th} text-center`}>Full</th>
+                    <th scope="col" className={`${th} text-right`}>{per100}</th>
+                    <th scope="col" className={`${th} w-12`}><span className="sr-only">Actions</span></th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#EEF2F7]">
+                  {rows.map((r, i) => (
+                    <tr key={r.id} className={i === 0 ? "bg-[#F5F8FF]" : "hover:bg-[#FAFBFD]"}>
+                      <td className={td}>{formatDate(r.filled_at)}</td>
+                      <td className={`${td} text-right`}>{formatKm(r.mileage)}</td>
+                      <td className={`${td} text-right`}>{amount(r.liters)}</td>
+                      <td className={`${td} text-right`}>
+                        <span className="block font-semibold">{formatMoney(r.total_cost)}</span>
+                        <span className="block text-xs text-[#5B6475]">
+                          {formatMoney(r.price_per_liter)}/{unit}
+                        </span>
+                      </td>
+                      <td className={`${td} text-center`}>
+                        <FullMark full={r.is_full_tank} electric={electric} />
+                      </td>
+                      <td className={`${td} text-right font-semibold`}>
+                        {r.consumption != null ? r.consumption.toFixed(1) : <span className="font-normal text-[#8A93A3]">—</span>}
+                      </td>
+                      <td className={`${td} w-12`}>{actions(r)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <p className="mt-auto border-t border-[#EEF2F7] px-6 py-4 text-sm text-[#5B6475]">
+              Showing {rows.length} of {total}
+              {nextLimitHref && (
+                <>
+                  {" · "}
+                  <Link href={nextLimitHref} scroll={false} className="rounded font-semibold text-[#1766F2] outline-none hover:underline focus-visible:ring-3 focus-visible:ring-[#1766F2]/30">
+                    Load more
+                  </Link>
+                </>
+              )}
+            </p>
+          </section>
+
+          {/* Мобільний: картки */}
+          <div className="min-w-0 lg:hidden">
+            <ul className="grid grid-cols-1 gap-3">
+              {rows.map((r) => (
+                <li key={r.id} className={cn(cardClass, "p-4")}>
+                  <div className="flex items-start gap-3">
+                    <div className="min-w-0 flex-1">
+                      <p className="font-semibold text-[#0B1220] tabular-nums">
+                        {amount(r.liters)} {unit} · {formatMoney(r.total_cost)}
+                      </p>
+                      <p className="mt-1 text-sm break-words text-[#5B6475]">
+                        {formatDate(r.filled_at)} · {formatKm(r.mileage)}
+                        {r.station && <> · {r.station}</>}
+                      </p>
+                    </div>
+                    <div className="-mt-1 -mr-1.5">{actions(r)}</div>
                   </div>
-                  <div className="-mt-1 -mr-1.5">{actions(r)}</div>
-                </div>
-                <div className="mt-2 flex items-center justify-between text-sm">
-                  <span className="text-[#5B6475]">
-                    {formatMoney(r.price_per_liter)}/{unit} · {r.is_full_tank ? (electric ? "Full charge" : "Full tank") : "Partial"}
-                  </span>
-                  {r.consumption != null && (
-                    <span className="font-semibold text-[#0B1220]">
-                      {r.consumption.toFixed(1)} {per100}
+                  <div className="mt-2 flex items-center justify-between gap-3 text-sm">
+                    <span className="flex items-center gap-2 text-[#5B6475]">
+                      <FullMark full={r.is_full_tank} electric={electric} />
+                      {formatMoney(r.price_per_liter)}/{unit}
                     </span>
-                  )}
-                </div>
-              </li>
-            ))}
-          </ul>
-          {loadMore}
-        </>
+                    {r.consumption != null && (
+                      <span className="font-semibold text-[#0B1220] tabular-nums">
+                        {r.consumption.toFixed(1)} {per100}
+                      </span>
+                    )}
+                  </div>
+                </li>
+              ))}
+            </ul>
+            {loadMore}
+          </div>
+        </div>
       )}
 
       {dialog && (

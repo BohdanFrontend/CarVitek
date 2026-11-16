@@ -2,7 +2,7 @@ import { Plus, Wrench } from "lucide-react"
 import type { Metadata } from "next"
 import Link from "next/link"
 
-import { primaryButtonClass } from "@/components/common/buttons"
+import { cardClass, primaryButtonClass } from "@/components/common/buttons"
 import { EmptyState, NoCarState } from "@/components/common/empty-state"
 import { FilterChips } from "@/components/common/filter-chips"
 import { LoadMore, parseLimit } from "@/components/common/load-more"
@@ -10,7 +10,7 @@ import { PageHeader } from "@/components/common/page-header"
 import { ServiceRecordsList } from "@/components/service-log/service-records-list"
 import { getActiveCar } from "@/lib/cars/active-car"
 import { carLabel } from "@/lib/cars/format"
-import { formatMoney } from "@/lib/format"
+import { formatMoney, formatMoneyShort } from "@/lib/format"
 import { WORK_GROUPS, WORK_GROUP_LABELS, isWorkGroup } from "@/lib/maintenance/groups"
 import { listServiceRecords } from "@/lib/service-log/queries"
 
@@ -36,7 +36,9 @@ export default async function ServiceLogPage({ searchParams }: PageProps<"/servi
     <div>
       <PageHeader title="Service Log" description={carLabel(activeCar)} action={addButton} />
 
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+      {/* Мобільний: чипи (власний горизонтальний скрол) і під ними картка підсумку.
+          Десктоп: чипи й підсумок в одному рядку, як раніше. */}
+      <div className="mb-4 grid grid-cols-1 gap-3 lg:flex lg:flex-wrap lg:items-center lg:justify-between">
         <FilterChips
           label="Filter by work type"
           param="group"
@@ -47,11 +49,20 @@ export default async function ServiceLogPage({ searchParams }: PageProps<"/servi
           ]}
         />
         {total > 0 && (
-          <p className="text-[15px] text-[#5B6475]">
-            Total spent:{" "}
-            <span className="font-bold text-[#0B1220]">{formatMoney(totalSpent)}</span>
-            <span className="ml-1">({total} {total === 1 ? "record" : "records"})</span>
-          </p>
+          <>
+            <div className={`${cardClass} rounded-[16px] px-4 py-3 lg:hidden`}>
+              <p className="text-[13px] text-[#5B6475]">Total spent</p>
+              <p className="text-[22px] leading-tight font-extrabold text-[#0B1220]">{formatMoneyShort(totalSpent)}</p>
+              <p className="text-[13px] text-[#5B6475]">
+                {total} {total === 1 ? "record" : "records"}
+              </p>
+            </div>
+            <p className="hidden text-[15px] text-[#5B6475] lg:block">
+              Total spent:{" "}
+              <span className="font-bold text-[#0B1220]">{formatMoney(totalSpent)}</span>
+              <span className="ml-1">({total} {total === 1 ? "record" : "records"})</span>
+            </p>
+          </>
         )}
       </div>
 

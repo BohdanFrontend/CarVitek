@@ -82,7 +82,7 @@ export function PhotoDropzone({ value, onChange, disabled }: PhotoDropzoneProps)
 
   if (value) {
     return (
-      <div className="grid gap-2">
+      <div className="grid grid-cols-1 gap-2">
         <div className="relative aspect-[16/10] max-h-80 overflow-hidden rounded-[14px] border border-[#D9DEE7] bg-[#EAF1FE] sm:max-w-md">
           {/* blob: і signed URL — next/image тут не потрібен */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -114,7 +114,7 @@ export function PhotoDropzone({ value, onChange, disabled }: PhotoDropzoneProps)
   }
 
   return (
-    <div className="grid gap-1.5">
+    <div className="grid grid-cols-1 gap-1.5">
       <label
         htmlFor={inputId}
         onDragOver={(e) => {

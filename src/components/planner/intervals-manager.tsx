@@ -158,7 +158,7 @@ export function IntervalsManager({ carId, rows }: { carId: string; rows: Interva
       </div>
 
       {/* Мобільний: картки */}
-      <ul className="grid gap-3 lg:hidden">
+      <ul className="grid grid-cols-1 gap-3 lg:hidden">
         {rows.map((r) => {
           const mine = myCarLabel(r)
           return (
@@ -342,7 +342,7 @@ function CustomTaskDialog({ open, onOpenChange }: { open: boolean; onOpenChange:
   return (
     <Dialog open={open} onOpenChange={change}>
       <DialogContent className="rounded-[20px] sm:max-w-lg">
-        <form onSubmit={submit} noValidate className="grid gap-4">
+        <form onSubmit={submit} noValidate className="grid grid-cols-1 gap-4">
           <DialogHeader>
             <DialogTitle className="text-lg font-bold text-[#0B1220]">Custom maintenance task</DialogTitle>
             <DialogDescription className="text-[15px] text-[#5B6475]">
@@ -361,7 +361,7 @@ function CustomTaskDialog({ open, onOpenChange }: { open: boolean; onOpenChange:
               {...fieldA11y(`${ids}-name`, errors.name)}
             />
           </Field>
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <Field id={`${ids}-km`} label="Distance" optional error={errors.interval_km}>
               <UnitInput id={`${ids}-km`} unit="km" value={km} onChange={setKm} placeholder="e.g. 40000" error={errors.interval_km} disabled={pending} />
             </Field>
