@@ -79,12 +79,6 @@ export const getMaintenancePlan = cache(async (carId: string): Promise<Maintenan
   })
 })
 
-/** Кількість робіт, що потребують уваги (бейдж на дзвіночку). */
-export async function getAttentionCount(carId: string) {
-  const plan = await getMaintenancePlan(carId)
-  return plan.filter((i) => i.status === "overdue" || i.status === "soon").length
-}
-
 export type DashboardData = Awaited<ReturnType<typeof getDashboardData>>
 
 /** Усе для дашборду активного авто: план ТО, витрата пального, витрати й вартість 1 км. */

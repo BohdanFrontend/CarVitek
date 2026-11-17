@@ -5,6 +5,7 @@ import { cookies } from "next/headers"
 import { z } from "zod"
 
 import { ACTIVE_CAR_COOKIE, activeCarCookieOptions } from "@/lib/cars/active-car"
+import { removeFolder } from "@/lib/server/storage-cleanup"
 import { createClient } from "@/lib/supabase/server"
 import { carSchema, mileageTooLowMessage, type CarInput } from "@/lib/validation/car"
 
@@ -14,7 +15,7 @@ export type CarActionResult =
   | { ok: true; carId: string }
   | { ok: false; message: string; fieldErrors?: Record<string, string[] | undefined> }
 
-const carIdSchema = z.uuid("Invalid car id")
+const carIdSchema = z.uuid("errors.invalidRequest")
 
 /** Поточний користувач або null. Перевіряє JWT, а не просто читає cookie. */
 async function getUser() {
@@ -30,11 +31,11 @@ function isValidPhotoPath(path: string, userId: string, carId: string) {
   return path.startsWith(prefix) && path.length > prefix.length && !path.includes("..")
 }
 
-const notSignedIn = { ok: false, message: "You're not signed in." } as const
+const notSignedIn = { ok: false, message: "errors.notSignedIn" } as const
 
 const invalidData = (error: z.ZodError): CarActionResult => ({
   ok: false,
-  message: "Please check the highlighted fields.",
+  message: "errors.checkFields",
   fieldErrors: z.flattenError(error).fieldErrors,
 })
 
@@ -52,11 +53,11 @@ export async function createCar(
   const { supabase, userId } = await getUser()
   if (!userId) return notSignedIn
 
-  if (!carIdSchema.safeParse(carId).success) return { ok: false, message: "Invalid car id." }
+  if (!carIdSchema.safeParse(carId).success) return { ok: false, message: "errors.invalidRequest" }
   const parsed = carSchema.safeParse(input)
   if (!parsed.success) return invalidData(parsed.error)
   if (photoPath && !isValidPhotoPath(photoPath, userId, carId)) {
-    return { ok: false, message: "Invalid photo." }
+    return { ok: false, message: "errors.invalidPhoto" }
   }
 
   // Чи є в користувача інші авто — перше додане одразу стає активним
@@ -68,7 +69,7 @@ export async function createCar(
     .insert({ id: carId, ...parsed.data, photo_path: photoPath })
   if (error) {
     console.error("createCar:", error)
-    return { ok: false, message: "Couldn't save the car. Please try again." }
+    return { ok: false, message: "errors.saveCarFailed" }
   }
 
   if (!count) await setActiveCookie(carId)
@@ -86,7 +87,7 @@ export async function updateCar(
   const { supabase, userId } = await getUser()
   if (!userId) return notSignedIn
 
-  if (!carIdSchema.safeParse(carId).success) return { ok: false, message: "Invalid car id." }
+  if (!carIdSchema.safeParse(carId).success) return { ok: false, message: "errors.invalidRequest" }
   const parsed = carSchema.safeParse(input)
   if (!parsed.success) return invalidData(parsed.error)
 
@@ -95,7 +96,7 @@ export async function updateCar(
     .select("id, current_mileage, photo_path")
     .eq("id", carId)
     .maybeSingle()
-  if (!car) return { ok: false, message: "This car doesn't exist or was deleted." }
+  if (!car) return { ok: false, message: "errors.carNotFound" }
 
   const { current_mileage: newMileage, ...fields } = parsed.data
   if (newMileage < car.current_mileage) {
@@ -105,7 +106,7 @@ export async function updateCar(
 
   const photoChanged = photoPath !== car.photo_path
   if (photoChanged && photoPath && !isValidPhotoPath(photoPath, userId, carId)) {
-    return { ok: false, message: "Invalid photo." }
+    return { ok: false, message: "errors.invalidPhoto" }
   }
 
   // Спершу пробіг: cars.current_mileage піднімає тригер mileage_entries_sync_car.
@@ -117,7 +118,7 @@ export async function updateCar(
       .insert({ car_id: carId, mileage: newMileage, source: "manual" })
     if (mileageError) {
       console.error("updateCar mileage:", mileageError)
-      return { ok: false, message: "Couldn't save the changes. Please try again." }
+      return { ok: false, message: "errors.saveChangesFailed" }
     }
   }
 
@@ -127,7 +128,7 @@ export async function updateCar(
     .eq("id", carId)
   if (error) {
     console.error("updateCar:", error)
-    return { ok: false, message: "Couldn't save the changes. Please try again." }
+    return { ok: false, message: "errors.saveChangesFailed" }
   }
 
   // Старе фото більше ніде не використовується
@@ -144,7 +145,7 @@ export async function updateCar(
 export async function deleteCar(carId: string): Promise<CarActionResult> {
   const { supabase, userId } = await getUser()
   if (!userId) return notSignedIn
-  if (!carIdSchema.safeParse(carId).success) return { ok: false, message: "Invalid car id." }
+  if (!carIdSchema.safeParse(carId).success) return { ok: false, message: "errors.invalidRequest" }
 
   // Записи ТО, заправки, витрати й пробіг видаляються каскадно (on delete cascade)
   const { data: deleted, error } = await supabase
@@ -154,7 +155,7 @@ export async function deleteCar(carId: string): Promise<CarActionResult> {
     .select("id")
   if (error || !deleted?.length) {
     if (error) console.error("deleteCar:", error)
-    return { ok: false, message: "Couldn't delete the car. Please try again." }
+    return { ok: false, message: "errors.deleteCarFailed" }
   }
 
   // Усі файли авто в Storage: <user_id>/<car_id>/*
@@ -169,6 +170,10 @@ export async function deleteCar(carId: string): Promise<CarActionResult> {
       .remove(files.map((f) => `${folder}/${f.name}`))
     if (removeError) console.error("deleteCar remove photos:", removeError)
   }
+  // Документи й чеки авто: <user_id>/<car_id>/… у своїх бакетах
+  for (const bucket of ["documents", "receipts"]) {
+    await removeFolder(supabase, bucket, folder).catch((e) => console.error(`deleteCar remove ${bucket}:`, e))
+  }
 
   const cookieStore = await cookies()
   if (cookieStore.get(ACTIVE_CAR_COOKIE)?.value === carId) cookieStore.delete(ACTIVE_CAR_COOKIE)
@@ -181,11 +186,11 @@ export async function deleteCar(carId: string): Promise<CarActionResult> {
 export async function setActiveCar(carId: string): Promise<CarActionResult> {
   const { supabase, userId } = await getUser()
   if (!userId) return notSignedIn
-  if (!carIdSchema.safeParse(carId).success) return { ok: false, message: "Invalid car id." }
+  if (!carIdSchema.safeParse(carId).success) return { ok: false, message: "errors.invalidRequest" }
 
   // RLS поверне рядок лише для власного авто
   const { data: car } = await supabase.from("cars").select("id").eq("id", carId).maybeSingle()
-  if (!car) return { ok: false, message: "This car doesn't exist or was deleted." }
+  if (!car) return { ok: false, message: "errors.carNotFound" }
 
   await setActiveCookie(carId)
   revalidatePath("/", "layout")

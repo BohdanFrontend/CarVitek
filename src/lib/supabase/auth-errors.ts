@@ -1,19 +1,19 @@
 import type { AuthError } from "@supabase/supabase-js"
 
-const MESSAGES: Record<string, string> = {
-  invalid_credentials: "Invalid email or password.",
-  email_not_confirmed: "Your email isn't confirmed yet. Check your inbox.",
-  user_already_exists: "An account with this email already exists.",
-  email_exists: "An account with this email already exists.",
-  weak_password: "This password is too weak. Try a longer or more complex one.",
-  same_password: "Your new password must be different from the old one.",
-  over_email_send_rate_limit: "Too many emails sent. Try again in a few minutes.",
-  over_request_rate_limit: "Too many attempts. Please wait a moment and try again.",
-  email_address_invalid: "Invalid email address.",
-  signup_disabled: "Sign-ups are temporarily disabled.",
-}
+const KNOWN = new Set([
+  "invalid_credentials",
+  "email_not_confirmed",
+  "user_already_exists",
+  "email_exists",
+  "weak_password",
+  "same_password",
+  "over_email_send_rate_limit",
+  "over_request_rate_limit",
+  "email_address_invalid",
+  "signup_disabled",
+])
 
-/** Перекладає помилку Supabase Auth у зрозуміле англійське повідомлення. */
-export function authErrorMessage(error: AuthError): string {
-  return (error.code && MESSAGES[error.code]) || "Something went wrong. Please try again."
+/** Ключ словника для помилки Supabase Auth (auth.errors.*); текст перекладає викликач. */
+export function authErrorKey(error: AuthError): string {
+  return `auth.errors.${error.code && KNOWN.has(error.code) ? error.code : "generic"}`
 }

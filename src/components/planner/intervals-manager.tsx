@@ -1,6 +1,7 @@
 "use client"
 
 import { Loader2, Plus, RotateCcw, SlidersHorizontal } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { useId, useRef, useState, useTransition } from "react"
 import { toast } from "sonner"
 import { cn } from "cn"
@@ -17,8 +18,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { formatKm } from "@/lib/format"
-import { describeInterval } from "@/lib/maintenance/describe"
+import { useFormat } from "@/i18n/format-client"
+import { useMessageText } from "@/i18n/use-message"
+import type { Formatter } from "@/lib/format"
+import { describeInterval, type PlannerT } from "@/lib/maintenance/describe"
 import { customTaskSchema, intervalRuleSchema, optionalIntFromString } from "@/lib/validation/maintenance"
 
 export type IntervalRow = {
@@ -41,10 +44,10 @@ const errorsFrom = (issues: { path: PropertyKey[]; message: string }[]): Errors 
   Object.fromEntries(issues.map((i) => [String(i.path[0] ?? "interval_km"), i.message]))
 
 /** Що показати в колонці «My car». */
-function myCarLabel(r: IntervalRow) {
-  if (!r.enabled) return { text: "Not tracked", muted: true }
-  if (r.ruleKm == null && r.ruleMonths == null) return { text: "Default", muted: true }
-  return { text: describeInterval(r.ruleKm ?? r.defaultKm, r.ruleMonths ?? r.defaultMonths), muted: false }
+function myCarLabel(r: IntervalRow, t: PlannerT & ((key: "intervals.notTracked" | "intervals.default") => string), f: Formatter) {
+  if (!r.enabled) return { text: t("intervals.notTracked"), muted: true }
+  if (r.ruleKm == null && r.ruleMonths == null) return { text: t("intervals.default"), muted: true }
+  return { text: describeInterval(r.ruleKm ?? r.defaultKm, r.ruleMonths ?? r.defaultMonths, t, f), muted: false }
 }
 
 export function IntervalsManager({ carId, rows }: { carId: string; rows: IntervalRow[] }) {
@@ -57,6 +60,10 @@ export function IntervalsManager({ carId, rows }: { carId: string; rows: Interva
   const [errors, setErrors] = useState<Errors>({})
   const [pending, startTransition] = useTransition()
   const [customOpen, setCustomOpen] = useState(false)
+  const t = useTranslations("planner")
+  const tc = useTranslations("common")
+  const f = useFormat()
+  const text = useMessageText()
 
   const editing = rows.find((r) => r.typeId === editingId) ?? null
 
@@ -82,10 +89,10 @@ export function IntervalsManager({ carId, rows }: { carId: string; rows: Interva
       const res = await saveIntervalRule(carId, editing.typeId, parsed.data)
       if (!res.ok) {
         setErrors(errorsFrom(Object.entries(res.fieldErrors ?? {}).map(([k, v]) => ({ path: [k], message: v?.[0] ?? res.message }))))
-        toast.error(res.message)
+        toast.error(text(res.message))
         return
       }
-      toast.success(`${editing.name}: interval saved`)
+      toast.success(t("intervals.saved", { name: editing.name }))
       setEditingId(null)
     })
   }
@@ -94,8 +101,8 @@ export function IntervalsManager({ carId, rows }: { carId: string; rows: Interva
     if (!editing) return
     startTransition(async () => {
       const res = await resetIntervalRule(carId, editing.typeId)
-      if (!res.ok) return void toast.error(res.message)
-      toast.success(`${editing.name}: back to the default interval`)
+      if (!res.ok) return void toast.error(text(res.message))
+      toast.success(t("intervals.resetDone", { name: editing.name }))
       setEditingId(null)
     })
   }
@@ -108,7 +115,7 @@ export function IntervalsManager({ carId, rows }: { carId: string; rows: Interva
       <div className="mb-4 flex justify-end">
         <button type="button" onClick={() => setCustomOpen(true)} className={secondaryButtonClass}>
           <Plus className="size-4.5" aria-hidden />
-          Custom task
+          {t("intervals.customTask")}
         </button>
       </div>
 
@@ -117,15 +124,15 @@ export function IntervalsManager({ carId, rows }: { carId: string; rows: Interva
         <table className="w-full text-[15px] text-[#0B1220]">
           <thead className="border-b border-[#E5E9F0]">
             <tr>
-              <th scope="col" className={th}>Maintenance type</th>
-              <th scope="col" className={th}>Recommended interval</th>
-              <th scope="col" className={th}>My car</th>
-              <th scope="col" className={`${th} text-right`}>Actions</th>
+              <th scope="col" className={th}>{t("intervals.colType")}</th>
+              <th scope="col" className={th}>{t("intervals.colRecommended")}</th>
+              <th scope="col" className={th}>{t("intervals.colMyCar")}</th>
+              <th scope="col" className={`${th} text-right`}>{tc("actions")}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-[#EEF1F6]">
             {rows.map((r) => {
-              const mine = myCarLabel(r)
+              const mine = myCarLabel(r, t, f)
               return (
                 <tr key={r.typeId} className={cn(editingId === r.typeId && "bg-[#F5F8FF]")}>
                   <td className={td}>
@@ -133,21 +140,21 @@ export function IntervalsManager({ carId, rows }: { carId: string; rows: Interva
                       <WorkTypeIcon code={r.code} size="sm" />
                       <span className="font-medium">{r.name}</span>
                       {r.isCustom && (
-                        <span className="rounded-full bg-[#EEF3FE] px-2 py-0.5 text-xs font-semibold text-[#1766F2]">Custom</span>
+                        <span className="rounded-full bg-[#EEF3FE] px-2 py-0.5 text-xs font-semibold text-[#1766F2]">{t("intervals.custom")}</span>
                       )}
                     </span>
                   </td>
-                  <td className={`${td} text-[#5B6475]`}>{describeInterval(r.defaultKm, r.defaultMonths)}</td>
+                  <td className={`${td} text-[#5B6475]`}>{describeInterval(r.defaultKm, r.defaultMonths, t, f)}</td>
                   <td className={cn(td, mine.muted ? "text-[#8A93A3]" : "font-semibold")}>{mine.text}</td>
                   <td className={`${td} text-right`}>
                     <button
                       type="button"
                       onClick={() => startEdit(r)}
-                      aria-label={`Edit ${r.name} interval for my car`}
+                      aria-label={t("intervals.editFor", { name: r.name })}
                       className="inline-flex h-9 items-center gap-2 rounded-[10px] px-3 text-sm font-semibold text-[#1766F2] outline-none hover:bg-[#EEF3FE] focus-visible:ring-3 focus-visible:ring-[#1766F2]/30"
                     >
                       <SlidersHorizontal className="size-4" aria-hidden />
-                      Edit for my car
+                      {t("intervals.editForMyCar")}
                     </button>
                   </td>
                 </tr>
@@ -160,21 +167,21 @@ export function IntervalsManager({ carId, rows }: { carId: string; rows: Interva
       {/* Мобільний: картки */}
       <ul className="grid grid-cols-1 gap-3 lg:hidden">
         {rows.map((r) => {
-          const mine = myCarLabel(r)
+          const mine = myCarLabel(r, t, f)
           return (
             <li key={r.typeId} className={cn(cardClass, "flex items-center gap-3 p-4", editingId === r.typeId && "ring-2 ring-[#1766F2]")}>
               <WorkTypeIcon code={r.code} />
               <div className="min-w-0 flex-1">
                 <p className="truncate font-semibold text-[#0B1220]">{r.name}</p>
-                <p className="text-sm text-[#5B6475]">{describeInterval(r.defaultKm, r.defaultMonths)}</p>
+                <p className="text-sm text-[#5B6475]">{describeInterval(r.defaultKm, r.defaultMonths, t, f)}</p>
                 <p className={cn("text-sm", mine.muted ? "text-[#8A93A3]" : "font-semibold text-[#0B1220]")}>
-                  My car: {mine.text}
+                  {t("intervals.myCar", { value: mine.text })}
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => startEdit(r)}
-                aria-label={`Edit ${r.name} interval for my car`}
+                aria-label={t("intervals.editFor", { name: r.name })}
                 className="grid size-10 shrink-0 place-items-center rounded-full text-[#1766F2] outline-none hover:bg-[#EEF3FE] focus-visible:ring-3 focus-visible:ring-[#1766F2]/30"
               >
                 <SlidersHorizontal className="size-5" aria-hidden />
@@ -193,32 +200,31 @@ export function IntervalsManager({ carId, rows }: { carId: string; rows: Interva
           >
             <h2 id={`${ids}-panel`} className="flex items-center gap-2.5 text-lg font-bold text-[#0B1220]">
               <WorkTypeIcon code={editing.code} size="sm" />
-              {editing.name} <span className="font-normal text-[#5B6475]">(custom interval)</span>
+              {editing.name} <span className="font-normal text-[#5B6475]">{t("intervals.customInterval")}</span>
             </h2>
             <p className="mt-1 text-sm text-[#5B6475]">
-              Leave a field empty to use the recommended value
-              ({describeInterval(editing.defaultKm, editing.defaultMonths)}).
+              {t("intervals.leaveEmpty", { interval: describeInterval(editing.defaultKm, editing.defaultMonths, t, f) })}
             </p>
 
             <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_auto] lg:items-end">
-              <Field id={`${ids}-km`} label="Distance" error={errors.interval_km}>
+              <Field id={`${ids}-km`} label={t("intervals.distance")} error={errors.interval_km}>
                 <UnitInput
                   id={`${ids}-km`}
                   unit="km"
                   value={km}
                   onChange={setKm}
-                  placeholder={editing.defaultKm ? `Default: ${formatKm(editing.defaultKm)}` : "Not set"}
+                  placeholder={editing.defaultKm ? t("intervals.defaultValue", { value: f.km(editing.defaultKm) }) : t("intervals.notSet")}
                   error={errors.interval_km}
                   disabled={pending}
                 />
               </Field>
-              <Field id={`${ids}-months`} label="Time" error={errors.interval_months}>
+              <Field id={`${ids}-months`} label={t("intervals.time")} error={errors.interval_months}>
                 <UnitInput
                   id={`${ids}-months`}
                   unit="months"
                   value={months}
                   onChange={setMonths}
-                  placeholder={editing.defaultMonths ? `Default: ${editing.defaultMonths}` : "Not set"}
+                  placeholder={editing.defaultMonths ? t("intervals.defaultValue", { value: editing.defaultMonths }) : t("intervals.notSet")}
                   error={errors.interval_months}
                   disabled={pending}
                 />
@@ -236,7 +242,7 @@ export function IntervalsManager({ carId, rows }: { carId: string; rows: Interva
                   aria-hidden
                   className="relative h-7 w-12 shrink-0 rounded-full bg-[#CBD5E1] transition-colors peer-checked:bg-[#1766F2] peer-focus-visible:ring-3 peer-focus-visible:ring-[#1766F2]/30 after:absolute after:top-1 after:left-1 after:size-5 after:rounded-full after:bg-white after:shadow after:transition-transform peer-checked:after:translate-x-5"
                 />
-                Track this task
+                {t("intervals.track")}
               </label>
             </div>
 
@@ -244,16 +250,16 @@ export function IntervalsManager({ carId, rows }: { carId: string; rows: Interva
               {editing.hasRule && (
                 <button type="button" onClick={reset} disabled={pending} className={cn(secondaryButtonClass, "mr-auto")}>
                   <RotateCcw className="size-4" aria-hidden />
-                  Reset to default
+                  {t("intervals.reset")}
                 </button>
               )}
               <div className="ml-auto flex gap-2">
                 <button type="button" onClick={() => setEditingId(null)} disabled={pending} className={secondaryButtonClass}>
-                  Cancel
+                  {tc("cancel")}
                 </button>
                 <button type="button" onClick={save} disabled={pending} className={primaryButtonClass}>
                   {pending && <Loader2 className="size-4 animate-spin" aria-hidden />}
-                  Save
+                  {tc("save")}
                 </button>
               </div>
             </div>
@@ -283,6 +289,8 @@ function UnitInput({
   error?: string
   disabled?: boolean
 }) {
+  const t = useTranslations("planner")
+  const f = useFormat()
   return (
     <div className="relative">
       <input
@@ -297,7 +305,7 @@ function UnitInput({
         {...fieldA11y(id, error)}
       />
       <span className="pointer-events-none absolute top-1/2 right-4 -translate-y-1/2 text-[15px] font-medium text-[#5B6475]">
-        {unit}
+        {unit === "km" ? f.units.km : t("intervals.monthsUnit")}
       </span>
     </div>
   )
@@ -305,6 +313,8 @@ function UnitInput({
 
 /** «+ Custom task»: власна робота з назвою й інтервалами. */
 function CustomTaskDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (o: boolean) => void }) {
+  const t = useTranslations("planner")
+  const text = useMessageText()
   const ids = useId()
   const [name, setName] = useState("")
   const [km, setKm] = useState("")
@@ -333,8 +343,8 @@ function CustomTaskDialog({ open, onOpenChange }: { open: boolean; onOpenChange:
     if (!parsed.success) return setErrors(errorsFrom(parsed.error.issues))
     startTransition(async () => {
       const res = await createCustomTask(parsed.data)
-      if (!res.ok) return void toast.error(res.message)
-      toast.success(`“${parsed.data.name}” added to your maintenance tasks`)
+      if (!res.ok) return void toast.error(text(res.message))
+      toast.success(t("intervals.added", { name: parsed.data.name }))
       onOpenChange(false)
     })
   }
@@ -344,17 +354,17 @@ function CustomTaskDialog({ open, onOpenChange }: { open: boolean; onOpenChange:
       <DialogContent className="rounded-[20px] sm:max-w-lg">
         <form onSubmit={submit} noValidate className="grid grid-cols-1 gap-4">
           <DialogHeader>
-            <DialogTitle className="text-lg font-bold text-[#0B1220]">Custom maintenance task</DialogTitle>
+            <DialogTitle className="text-lg font-bold text-[#0B1220]">{t("intervals.dialogTitle")}</DialogTitle>
             <DialogDescription className="text-[15px] text-[#5B6475]">
-              Track anything that isn&apos;t in the list. Set a distance, a time interval, or both.
+              {t("intervals.dialogText")}
             </DialogDescription>
           </DialogHeader>
-          <Field id={`${ids}-name`} label="Name" error={errors.name}>
+          <Field id={`${ids}-name`} label={t("intervals.name")} error={errors.name}>
             <input
               id={`${ids}-name`}
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="e.g. Power steering fluid"
+              placeholder={t("intervals.namePlaceholder")}
               autoFocus
               disabled={pending}
               className={cn(inputClass, "pl-4")}
@@ -362,17 +372,17 @@ function CustomTaskDialog({ open, onOpenChange }: { open: boolean; onOpenChange:
             />
           </Field>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <Field id={`${ids}-km`} label="Distance" optional error={errors.interval_km}>
-              <UnitInput id={`${ids}-km`} unit="km" value={km} onChange={setKm} placeholder="e.g. 40000" error={errors.interval_km} disabled={pending} />
+            <Field id={`${ids}-km`} label={t("intervals.distance")} optional error={errors.interval_km}>
+              <UnitInput id={`${ids}-km`} unit="km" value={km} onChange={setKm} placeholder={t("intervals.kmPlaceholder")} error={errors.interval_km} disabled={pending} />
             </Field>
-            <Field id={`${ids}-months`} label="Time" optional error={errors.interval_months}>
-              <UnitInput id={`${ids}-months`} unit="months" value={months} onChange={setMonths} placeholder="e.g. 24" error={errors.interval_months} disabled={pending} />
+            <Field id={`${ids}-months`} label={t("intervals.time")} optional error={errors.interval_months}>
+              <UnitInput id={`${ids}-months`} unit="months" value={months} onChange={setMonths} placeholder={t("intervals.monthsPlaceholder")} error={errors.interval_months} disabled={pending} />
             </Field>
           </div>
           <DialogFooter>
             <button type="submit" disabled={pending} className={cn(primaryButtonClass, "w-full sm:w-auto")}>
               {pending && <Loader2 className="size-4 animate-spin" aria-hidden />}
-              Add task
+              {t("intervals.addTask")}
             </button>
           </DialogFooter>
         </form>

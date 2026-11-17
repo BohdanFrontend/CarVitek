@@ -1,9 +1,11 @@
 import { Hammer } from "lucide-react"
+import { getTranslations } from "next-intl/server"
 
 import { PageTitle } from "./page-title"
 
 /** Заглушка для розділів, які ще в розробці. */
-export function ComingSoon({ title }: { title: string }) {
+export async function ComingSoon({ title }: { title: string }) {
+  const t = await getTranslations("common")
   return (
     <div>
       <PageTitle>{title}</PageTitle>
@@ -11,9 +13,9 @@ export function ComingSoon({ title }: { title: string }) {
         <span className="grid size-16 place-items-center rounded-full bg-[#E8F0FE] text-[#1766F2]">
           <Hammer className="size-7" strokeWidth={1.9} aria-hidden />
         </span>
-        <p className="mt-5 text-xl font-bold text-[#0B1220]">Coming soon</p>
+        <p className="mt-5 text-xl font-bold text-[#0B1220]">{t("comingSoon")}</p>
         <p className="mt-1.5 max-w-sm text-[15px] text-[#5B6475]">
-          We&apos;re still building this section. Check back later.
+          {t("comingSoonText")}
         </p>
       </div>
     </div>

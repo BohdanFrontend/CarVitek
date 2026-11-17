@@ -1,10 +1,13 @@
 "use client"
 
-import { EllipsisVertical, Pencil, Trash2 } from "lucide-react"
+import { EllipsisVertical, ExternalLink, Pencil, Trash2 } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { useRouter } from "next/navigation"
 import { useState, useTransition } from "react"
 import { toast } from "sonner"
 import { cn } from "cn"
+
+import { useMessageText } from "@/i18n/use-message"
 
 import {
   AlertDialog,
@@ -32,6 +35,8 @@ type RowActionsProps = {
   /** Посилання на редагування або власний обробник (наприклад, відкрити діалог) */
   editHref?: string
   onEdit?: () => void
+  /** Необов'язковий пункт «View file» (відкривається в новій вкладці) */
+  view?: { href: string; label: string }
   onDelete: () => Promise<ActionResult>
   deleteTitle: string
   deleteDescription: string
@@ -44,6 +49,7 @@ export function RowActions({
   label,
   editHref,
   onEdit,
+  view,
   onDelete,
   deleteTitle,
   deleteDescription,
@@ -53,6 +59,8 @@ export function RowActions({
   const router = useRouter()
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [deleting, startDelete] = useTransition()
+  const t = useTranslations("common")
+  const text = useMessageText()
 
   const remove = () =>
     startDelete(async () => {
@@ -61,7 +69,7 @@ export function RowActions({
         setConfirmOpen(false)
         toast.success(deletedMessage)
       } else {
-        toast.error(res.message)
+        toast.error(text(res.message))
       }
     })
 
@@ -77,13 +85,22 @@ export function RowActions({
         >
           <EllipsisVertical className="size-5" aria-hidden />
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-44 rounded-xl p-1.5">
+        <DropdownMenuContent align="end" className="w-48 rounded-xl p-1.5">
+          {view && (
+            <DropdownMenuItem
+              onClick={() => window.open(view.href, "_blank", "noopener,noreferrer")}
+              className="h-10 gap-2.5 px-2.5 text-[15px]"
+            >
+              <ExternalLink className="size-4" aria-hidden />
+              {view.label}
+            </DropdownMenuItem>
+          )}
           <DropdownMenuItem
             onClick={() => (onEdit ? onEdit() : editHref && router.push(editHref))}
             className="h-10 gap-2.5 px-2.5 text-[15px]"
           >
             <Pencil className="size-4" aria-hidden />
-            Edit
+            {t("edit")}
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem
@@ -92,7 +109,7 @@ export function RowActions({
             className="h-10 gap-2.5 px-2.5 text-[15px]"
           >
             <Trash2 className="size-4" aria-hidden />
-            Delete
+            {t("delete")}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
@@ -106,13 +123,13 @@ export function RowActions({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={deleting}>{t("cancel")}</AlertDialogCancel>
             <Button
               onClick={remove}
               disabled={deleting}
               className="bg-destructive text-white hover:bg-destructive/90"
             >
-              {deleting ? "Deleting…" : "Delete"}
+              {deleting ? t("deleting") : t("delete")}
             </Button>
           </AlertDialogFooter>
         </AlertDialogContent>

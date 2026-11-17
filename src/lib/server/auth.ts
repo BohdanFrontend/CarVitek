@@ -24,8 +24,8 @@ export type MutationResult =
   | { ok: true; id?: string }
   | { ok: false; message: string; fieldErrors?: FieldErrors }
 
-export const NOT_SIGNED_IN = { ok: false, message: "You're not signed in." } as const
-export const CAR_NOT_FOUND = { ok: false, message: "This car doesn't exist or was deleted." } as const
+export const NOT_SIGNED_IN = { ok: false, message: "errors.notSignedIn" } as const
+export const CAR_NOT_FOUND = { ok: false, message: "errors.carNotFound" } as const
 
 /** Чи шлях файлу лежить у теці користувача і авто: <user_id>/<car_id>/<файл>. */
 export function isOwnedPath(path: string, userId: string, carId: string) {

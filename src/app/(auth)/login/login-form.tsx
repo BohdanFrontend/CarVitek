@@ -1,6 +1,7 @@
 "use client"
 
 import { Lock, Mail } from "lucide-react"
+import { useTranslations } from "next-intl"
 import Link from "next/link"
 import { useActionState } from "react"
 
@@ -21,8 +22,9 @@ import { signIn, type AuthFormState } from "../actions"
 
 const initialState: AuthFormState = { status: "idle" }
 
-export function LoginForm({ next, linkError }: { next?: string; linkError?: boolean }) {
+export function LoginForm({ next, linkError, deleted }: { next?: string; linkError?: boolean; deleted?: boolean }) {
   const [state, formAction, pending] = useActionState(signIn, initialState)
+  const t = useTranslations("auth")
 
   return (
     <div className={authCardClass}>
@@ -30,8 +32,11 @@ export function LoginForm({ next, linkError }: { next?: string; linkError?: bool
         {linkError && state.status === "idle" && (
           <FormAlert
             status="error"
-            message="This email link is invalid or has expired. Please try again."
+            message={t("login.linkError")}
           />
+        )}
+        {deleted && state.status === "idle" && (
+          <FormAlert status="success" message={t("login.accountDeleted")} />
         )}
         {state.status === "error" && <FormAlert status="error" message={state.message} />}
 
@@ -40,7 +45,7 @@ export function LoginForm({ next, linkError }: { next?: string; linkError?: bool
         <AuthField
           name="email"
           type="email"
-          label="Email address"
+          label={t("email")}
           icon={Mail}
           autoComplete="email"
           defaultValue={state.values?.email}
@@ -50,31 +55,31 @@ export function LoginForm({ next, linkError }: { next?: string; linkError?: bool
         <AuthField
           name="password"
           type="password"
-          label="Password"
+          label={t("password")}
           icon={Lock}
           autoComplete="current-password"
           errors={state.fieldErrors?.password}
         />
 
-        <AuthSubmit pending={pending}>Log in</AuthSubmit>
+        <AuthSubmit pending={pending}>{t("login.submit")}</AuthSubmit>
       </form>
 
       <div className={authLinkRowClass}>
         <Link href="/forgot-password" className={authLinkClass}>
-          Forgot password?
+          {t("login.forgot")}
         </Link>
       </div>
 
       <div className={authDividerClass}>
         <span className={authDividerLineClass} />
-        or
+        {t("or")}
         <span className={authDividerLineClass} />
       </div>
 
       <p className={authFooterClass}>
-        Don&apos;t have an account?{" "}
+        {t("login.noAccount")}{" "}
         <Link href="/register" className={authFooterLinkClass}>
-          Sign up
+          {t("login.signUp")}
         </Link>
       </p>
     </div>

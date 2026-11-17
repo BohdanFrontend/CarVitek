@@ -1,6 +1,7 @@
 "use client"
 
 import { Lock, Mail, User } from "lucide-react"
+import { useTranslations } from "next-intl"
 import Link from "next/link"
 import { useActionState } from "react"
 import { cn } from "cn"
@@ -23,6 +24,7 @@ const initialState: AuthFormState = { status: "idle" }
 
 export function RegisterForm() {
   const [state, formAction, pending] = useActionState(signUp, initialState)
+  const t = useTranslations("auth")
 
   // Лист для підтвердження надіслано — форму більше не показуємо
   if (state.status === "success") {
@@ -30,7 +32,7 @@ export function RegisterForm() {
       <div className={cn(authCardClass, "grid gap-6")}>
         <FormAlert status="success" message={state.message} />
         <Link href="/login" className={cn(authLinkClass, "justify-self-center")}>
-          Back to log in
+          {t("backToLogin")}
         </Link>
       </div>
     )
@@ -43,7 +45,7 @@ export function RegisterForm() {
 
         <AuthField
           name="fullName"
-          label="Full name"
+          label={t("register.fullName")}
           icon={User}
           autoComplete="name"
           defaultValue={state.values?.fullName}
@@ -53,7 +55,7 @@ export function RegisterForm() {
         <AuthField
           name="email"
           type="email"
-          label="Email address"
+          label={t("email")}
           icon={Mail}
           autoComplete="email"
           defaultValue={state.values?.email}
@@ -62,7 +64,7 @@ export function RegisterForm() {
         <AuthField
           name="password"
           type="password"
-          label="Password (min. 8 chars, a letter and a digit)"
+          label={t("register.passwordHint")}
           icon={Lock}
           autoComplete="new-password"
           errors={state.fieldErrors?.password}
@@ -70,25 +72,25 @@ export function RegisterForm() {
         <AuthField
           name="confirmPassword"
           type="password"
-          label="Confirm password"
+          label={t("confirmPassword")}
           icon={Lock}
           autoComplete="new-password"
           errors={state.fieldErrors?.confirmPassword}
         />
 
-        <AuthSubmit pending={pending}>Sign up</AuthSubmit>
+        <AuthSubmit pending={pending}>{t("register.submit")}</AuthSubmit>
       </form>
 
       <div className={authDividerClass}>
         <span className={authDividerLineClass} />
-        or
+        {t("or")}
         <span className={authDividerLineClass} />
       </div>
 
       <p className={authFooterClass}>
-        Already have an account?{" "}
+        {t("register.haveAccount")}{" "}
         <Link href="/login" className={authFooterLinkClass}>
-          Log in
+          {t("register.logIn")}
         </Link>
       </p>
     </div>

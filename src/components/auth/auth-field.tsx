@@ -1,6 +1,7 @@
 "use client"
 
 import { Eye, EyeOff, type LucideIcon } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { useId, useState } from "react"
 import { cn } from "cn"
 
@@ -32,6 +33,7 @@ export function AuthField({
   const id = useId()
   const errorId = `${id}-error`
   const [visible, setVisible] = useState(false)
+  const t = useTranslations("auth")
   const isPassword = type === "password"
   const hasError = Boolean(errors?.length)
 
@@ -70,7 +72,7 @@ export function AuthField({
             type="button"
             onClick={() => setVisible((v) => !v)}
             className="absolute top-1/2 right-1.5 grid size-11 -translate-y-1/2 lg:right-3 lg:size-10 place-items-center rounded-lg text-[#5B6475] transition-colors hover:text-[#0B1220] focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
-            aria-label={visible ? "Hide password" : "Show password"}
+            aria-label={visible ? t("hidePassword") : t("showPassword")}
             aria-pressed={visible}
           >
             {visible ? <EyeOff className="size-5" /> : <Eye className="size-5" />}

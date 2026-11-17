@@ -1,17 +1,18 @@
 import type { Metadata } from "next"
+import { getTranslations } from "next-intl/server"
 
 import { AuthHeader } from "@/components/auth/auth-header"
 import { RegisterForm } from "./register-form"
 
-export const metadata: Metadata = { title: "Sign up" }
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: (await getTranslations("auth.register"))("metaTitle") }
+}
 
-export default function RegisterPage() {
+export default async function RegisterPage() {
+  const t = await getTranslations("auth.register")
   return (
     <>
-      <AuthHeader
-        title="Create an account"
-        subtitle="Your car's full service history in one place"
-      />
+      <AuthHeader title={t("title")} subtitle={t("subtitle")} />
       <RegisterForm />
     </>
   )

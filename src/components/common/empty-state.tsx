@@ -1,10 +1,8 @@
-import { Car, Plus, type LucideIcon } from "lucide-react"
-import Link from "next/link"
+import type { LucideIcon } from "lucide-react"
 import type { ReactNode } from "react"
 import { cn } from "cn"
 
-import { PageTitle } from "@/components/app-shell/page-title"
-import { cardClass, primaryButtonClass } from "./buttons"
+import { cardClass } from "./buttons"
 
 /** Порожній стан у картці: іконка в синьому колі, заголовок, опис, дія. */
 export function EmptyState({
@@ -33,21 +31,3 @@ export function EmptyState({
 }
 
 /** Сторінка модуля, коли в користувача ще немає авто. */
-export function NoCarState({ title, what }: { title: string; what: string }) {
-  return (
-    <div>
-      <PageTitle className="mb-6">{title}</PageTitle>
-      <EmptyState
-        icon={Car}
-        title="Add your first car"
-        description={`Add a car to start tracking its ${what}`}
-        action={
-          <Link href="/garage/new" className={primaryButtonClass}>
-            <Plus className="size-5" aria-hidden />
-            Add car
-          </Link>
-        }
-      />
-    </div>
-  )
-}

@@ -10,9 +10,9 @@ import {
 } from "./common"
 
 const typeIds = z
-  .array(z.uuid("Invalid work type"))
-  .min(1, "Select at least one work type")
-  .max(20, "Too many work types")
+  .array(z.uuid("validation.invalidWorkType"))
+  .min(1, "validation.selectWorkType")
+  .max(20, "validation.tooManyWorkTypes")
 
 /** Запис ТО, як його приймає сервер. */
 export const serviceRecordSchema = z.object({

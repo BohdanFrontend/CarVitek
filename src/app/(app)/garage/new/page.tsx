@@ -1,11 +1,14 @@
 import type { Metadata } from "next"
+import { getTranslations } from "next-intl/server"
 import { redirect } from "next/navigation"
 
 import { BackToGarage } from "@/components/cars/back-link"
 import { CarForm } from "@/components/cars/car-form"
 import { createClient } from "@/lib/supabase/server"
 
-export const metadata: Metadata = { title: "Add a car" }
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: (await getTranslations("garage.form"))("addTitle") }
+}
 
 export default async function NewCarPage() {
   const supabase = await createClient()

@@ -10,17 +10,22 @@ import {
   type LucideIcon,
 } from "lucide-react"
 
-export type NavItem = { href: string; label: string; icon: LucideIcon }
+/** label — ключ у розділі nav словника */
+export type NavItem = {
+  href: string
+  label: "dashboard" | "garage" | "serviceLog" | "fuel" | "planner" | "expenses" | "documents" | "settings"
+  icon: LucideIcon
+}
 
 export const NAV_ITEMS: readonly NavItem[] = [
-  { href: "/dashboard", label: "Dashboard", icon: House },
-  { href: "/garage", label: "Garage", icon: Car },
-  { href: "/service-log", label: "Service Log", icon: Wrench },
-  { href: "/fuel", label: "Fuel Log", icon: Fuel },
-  { href: "/planner", label: "Maintenance Planner", icon: ChartColumn },
-  { href: "/expenses", label: "Expenses", icon: Wallet },
-  { href: "/documents", label: "Documents", icon: FileText },
-  { href: "/settings", label: "Settings", icon: Settings },
+  { href: "/dashboard", label: "dashboard", icon: House },
+  { href: "/garage", label: "garage", icon: Car },
+  { href: "/service-log", label: "serviceLog", icon: Wrench },
+  { href: "/fuel", label: "fuel", icon: Fuel },
+  { href: "/planner", label: "planner", icon: ChartColumn },
+  { href: "/expenses", label: "expenses", icon: Wallet },
+  { href: "/documents", label: "documents", icon: FileText },
+  { href: "/settings", label: "settings", icon: Settings },
 ]
 
 /** Активний пункт: точний збіг або вкладений шлях (/garage/new → /garage). */

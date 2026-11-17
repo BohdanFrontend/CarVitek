@@ -1,6 +1,7 @@
 "use client"
 
 import { CalendarClock, Car, Ellipsis, House, LogOut, Wrench } from "lucide-react"
+import { useTranslations } from "next-intl"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useState, useTransition } from "react"
@@ -11,11 +12,11 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { NAV_ITEMS, isActivePath } from "./nav-items"
 
 const TABS = [
-  { href: "/dashboard", label: "Dashboard", icon: House },
-  { href: "/garage", label: "Garage", icon: Car },
-  { href: "/service-log", label: "Service Log", icon: Wrench },
-  { href: "/planner", label: "Planner", icon: CalendarClock },
-] as const
+  { href: "/dashboard", label: "tabHome", icon: House },
+  { href: "/garage", label: "garage", icon: Car },
+  { href: "/service-log", label: "tabLog", icon: Wrench },
+  { href: "/planner", label: "tabPlanner", icon: CalendarClock },
+] as const satisfies readonly { href: string; label: "tabHome" | "garage" | "tabLog" | "tabPlanner"; icon: unknown }[]
 
 /** Розділи, що не помістилися в таб-панель, — у шторці «More». */
 const MORE_ITEMS = NAV_ITEMS.filter((item) => !TABS.some((t) => t.href === item.href))
@@ -30,6 +31,7 @@ const tabClass = (active: boolean) =>
 /** Нижня таб-панель мобільного (< lg). */
 export function MobileNav() {
   const pathname = usePathname()
+  const t = useTranslations("nav")
   const [moreOpen, setMoreOpen] = useState(false)
   const [signingOut, startTransition] = useTransition()
   const moreActive = MORE_ITEMS.some((item) => isActivePath(pathname, item.href))
@@ -37,7 +39,7 @@ export function MobileNav() {
   return (
     <>
       <nav
-        aria-label="Main"
+        aria-label={t("main")}
         className="fixed inset-x-0 bottom-0 z-40 rounded-t-[24px] bg-linear-to-b from-[#1766F2] to-[#0A45C2] pb-[env(safe-area-inset-bottom)] shadow-[0_-8px_24px_rgba(11,69,194,0.25)] lg:hidden"
       >
         <div className="flex h-16 gap-1 px-2">
@@ -51,7 +53,7 @@ export function MobileNav() {
                 className={tabClass(active)}
               >
                 <Icon className="size-6" strokeWidth={active ? 2.2 : 1.9} aria-hidden />
-                {label}
+                {t(label)}
               </Link>
             )
           })}
@@ -63,7 +65,7 @@ export function MobileNav() {
             className={tabClass(moreActive || moreOpen)}
           >
             <Ellipsis className="size-6" strokeWidth={moreActive ? 2.2 : 1.9} aria-hidden />
-            More
+            {t("more")}
           </button>
         </div>
       </nav>
@@ -75,7 +77,7 @@ export function MobileNav() {
         >
           <div className="mx-auto mt-1 h-1 w-10 rounded-full bg-[#D9DEE7]" aria-hidden />
           <SheetHeader className="px-1 pb-1">
-            <SheetTitle className="text-lg font-bold text-[#0B1220]">More</SheetTitle>
+            <SheetTitle className="text-lg font-bold text-[#0B1220]">{t("more")}</SheetTitle>
           </SheetHeader>
           <ul className="grid grid-cols-1 gap-1">
             {MORE_ITEMS.map(({ href, label, icon: Icon }) => {
@@ -92,7 +94,7 @@ export function MobileNav() {
                     )}
                   >
                     <Icon className="size-5" strokeWidth={1.9} aria-hidden />
-                    {label}
+                    {t(label)}
                   </Link>
                 </li>
               )
@@ -106,7 +108,7 @@ export function MobileNav() {
             className="flex h-12 items-center gap-3 rounded-[12px] px-3 text-base font-medium text-destructive outline-none hover:bg-destructive/5 focus-visible:ring-3 focus-visible:ring-destructive/30 disabled:opacity-60"
           >
             <LogOut className="size-5" strokeWidth={1.9} aria-hidden />
-            Sign out
+            {t("signOut")}
           </button>
         </SheetContent>
       </Sheet>

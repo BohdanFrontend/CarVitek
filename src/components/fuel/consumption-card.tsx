@@ -1,7 +1,7 @@
 "use client"
 
-import { format, parseISO } from "date-fns"
 import { Fuel, Plus } from "lucide-react"
+import { useTranslations } from "next-intl"
 import Link from "next/link"
 import { Area, AreaChart, CartesianGrid, ReferenceLine, Tooltip, XAxis, YAxis } from "recharts"
 import { cn } from "cn"
@@ -9,7 +9,7 @@ import { cn } from "cn"
 import { useReducedMotion } from "@/components/dashboard/use-reduced-motion"
 import { ChartContainer } from "@/components/ui/chart"
 import type { ConsumptionPeriod, ConsumptionPoint, Granularity } from "@/lib/fuel/consumption"
-import { formatKm } from "@/lib/format"
+import { useFormat } from "@/i18n/format-client"
 
 export type ConsumptionStats = {
   points: ConsumptionPoint[]
@@ -21,11 +21,11 @@ export type ConsumptionStats = {
   max: number | null
 }
 
-const PERIODS: { value: ConsumptionPeriod; label: string; long: string }[] = [
-  { value: "6m", label: "6M", long: "over the last 6 months" },
-  { value: "1y", label: "1Y", long: "over the last 12 months" },
-  { value: "all", label: "All", long: "over all time" },
-]
+const PERIODS = [
+  { value: "6m", long: "over6m" },
+  { value: "1y", long: "over1y" },
+  { value: "all", long: "overAll" },
+] as const satisfies readonly { value: ConsumptionPeriod; long: string }[]
 
 const BLUE = "#1766F2"
 const GRID = "#EEF2F7"
@@ -61,19 +61,18 @@ export function ConsumptionCard({
 }) {
   const reduced = useReducedMotion()
   const electric = unit === "kWh"
-  const per100 = `${unit}/100 km`
+  const t = useTranslations("fuel")
+  const f = useFormat()
+  const per100 = t("per100", { unit: f.units[unit] })
   const { points, granularity, average, change, min, max } = stats
-  const periodText = PERIODS.find((p) => p.value === period)!.long
+  const periodText = t(`chart.${PERIODS.find((p) => p.value === period)!.long}`)
 
   // Підписи осі X: «Jan» або «Jan '26», якщо точки охоплюють різні роки
   const multiYear = new Set(points.map((p) => p.key.slice(0, 4))).size > 1
   const data = points.map((p) => ({
     ...p,
     value: Math.round(p.value * 100) / 100,
-    label:
-      granularity === "day"
-        ? format(parseISO(p.key), "d MMM")
-        : format(parseISO(`${p.key}-01`), multiYear ? "MMM ''yy" : "MMM"),
+    label: granularity === "day" ? f.dayMonth(p.key) : f.monthShort(p.key, multiYear),
   }))
   const axis = min != null && max != null ? yAxis(min, max) : null
 
@@ -84,10 +83,10 @@ export function ConsumptionCard({
     >
       <div className="flex flex-wrap items-start justify-between gap-3">
         <h2 id="consumption-title" className="text-lg font-bold text-[#0B1220]">
-          {electric ? "Energy consumption" : "Fuel consumption"}, {per100}
+          {t(electric ? "chart.titleElectric" : "chart.title", { per100 })}
         </h2>
         {hasSegments && (
-          <nav aria-label="Period" className="inline-flex rounded-[10px] bg-[#F1F4F9] p-0.5">
+          <nav aria-label={t("chart.period")} className="inline-flex rounded-[10px] bg-[#F1F4F9] p-0.5">
             {PERIODS.map((p) => (
               <Link
                 key={p.value}
@@ -99,7 +98,7 @@ export function ConsumptionCard({
                   p.value === period ? "bg-white text-[#0B1220] shadow-sm" : "text-[#5B6475] hover:text-[#0B1220]"
                 )}
               >
-                {p.label}
+                {t(`chart.${p.value}`)}
               </Link>
             ))}
           </nav>
@@ -112,9 +111,9 @@ export function ConsumptionCard({
           <span className="grid size-14 place-items-center rounded-full bg-[#E8F0FE] text-[#1766F2]">
             <Fuel className="size-6" aria-hidden />
           </span>
-          <p className="mt-4 font-bold text-[#0B1220]">Not enough data yet</p>
+          <p className="mt-4 font-bold text-[#0B1220]">{t("chart.notEnoughTitle")}</p>
           <p className="mt-1 max-w-xs text-sm text-[#5B6475]">
-            Add at least two {electric ? "full charges" : "full-tank refuelings"} to see your consumption
+            {t(electric ? "chart.notEnoughTextElectric" : "chart.notEnoughText")}
           </p>
           <button
             type="button"
@@ -122,35 +121,35 @@ export function ConsumptionCard({
             className="mt-5 inline-flex h-11 items-center gap-2 rounded-[12px] bg-[#1766F2] px-5 text-[15px] font-semibold text-white outline-none hover:bg-[#0F55D6] focus-visible:ring-3 focus-visible:ring-[#1766F2]/40"
           >
             <Plus className="size-4.5" aria-hidden />
-            {electric ? "Add charging" : "Add refueling"}
+            {electric ? t("addElectric") : t("add")}
           </button>
         </div>
       ) : (
         <>
           <div className="mt-2 flex flex-wrap items-baseline gap-x-3 gap-y-1">
             <p className="text-[32px] leading-tight font-extrabold tracking-[-0.02em] text-[#0B1220] tabular-nums">
-              {average != null ? average.toFixed(1) : "—"}
+              {average != null ? f.number(average, 1) : "—"}
               <span className="ml-1.5 text-[15px] font-semibold">{per100}</span>
             </p>
             {change != null && Math.abs(change) >= 0.05 && (
               <p className={cn("text-sm font-semibold tabular-nums", change < 0 ? "text-[#16A34A]" : "text-[#DC2626]")}>
                 <span aria-hidden>{change < 0 ? "↓ " : "↑ "}</span>
                 {change < 0 ? "−" : "+"}
-                {Math.abs(change).toFixed(1)}
-                <span className="sr-only"> {per100} vs the previous period</span>
+                {f.number(Math.abs(change), 1)}
+                <span className="sr-only"> {t("chart.vsPrevious", { per100 })}</span>
               </p>
             )}
           </div>
 
           {points.length === 0 ? (
             <p className="mt-6 flex-1 text-sm text-[#5B6475]">
-              No full-to-full segments {periodText}. Choose “All” to see earlier data.
+              {t("chart.noSegments", { period: periodText })}
             </p>
           ) : (
             <>
               <ChartContainer
                 aria-hidden
-                config={{ value: { label: "Consumption", color: BLUE } }}
+                config={{ value: { label: t("chart.consumption"), color: BLUE } }}
                 initialDimension={{ width: 560, height: 280 }}
                 className="mt-4 aspect-auto h-[220px] w-full lg:h-[280px] 3xl:h-[340px]"
               >
@@ -184,10 +183,10 @@ export function ConsumptionCard({
                       y={Math.round(average * 100) / 100}
                       stroke="#94A3B8"
                       strokeDasharray="4 4"
-                      label={{ value: `avg ${average.toFixed(1)}`, position: "insideTopRight", fill: MUTED, fontSize: 12 }}
+                      label={{ value: t("chart.avg", { value: f.number(average, 1) }), position: "insideTopRight", fill: MUTED, fontSize: 12 }}
                     />
                   )}
-                  <Tooltip content={<ConsumptionTooltip unit={unit} granularity={granularity} />} cursor={{ stroke: "#CBD5E1" }} />
+                  <Tooltip content={<ConsumptionTooltip unit={unit} granularity={granularity} per100={per100} />} cursor={{ stroke: "#CBD5E1" }} />
                   <Area
                     type="monotone"
                     dataKey="value"
@@ -203,26 +202,25 @@ export function ConsumptionCard({
               </ChartContainer>
               {average != null && min != null && max != null && (
                 <p className="sr-only">
-                  Average {electric ? "energy" : "fuel"} consumption {average.toFixed(1)} {per100} {periodText}
-                  {points.length > 1 ? `, from ${min.toFixed(1)} to ${max.toFixed(1)}` : ""}
+                  {t(electric ? "chart.srSummaryElectric" : "chart.srSummary", { value: f.number(average, 1), per100, period: periodText })}
+                  {points.length > 1 ? t("chart.srRange", { min: f.number(min, 1), max: f.number(max, 1) }) : ""}
                 </p>
               )}
               {granularity === "day" && (
                 <p className="mt-2 text-sm text-[#5B6475]">
-                  Showing each {electric ? "full charge" : "full-tank refueling"} — there isn&apos;t enough data for a monthly view yet.
+                  {t(electric ? "chart.perRefuelingElectric" : "chart.perRefueling")}
                 </p>
               )}
               {points.length === 1 && (
                 <p className="mt-2 text-sm text-[#5B6475]">
-                  Only one month with data in this period. Add more {electric ? "full charges" : "full-tank refuelings"} to
-                  see the trend.
+                  {t(electric ? "chart.onePointElectric" : "chart.onePoint")}
                 </p>
               )}
             </>
           )}
 
           <p className="mt-auto pt-3 text-[13px] text-[#5B6475]">
-            Calculated from full {electric ? "charge to full charge" : "tank to full tank"}
+            {t(electric ? "chart.noteElectric" : "chart.note")}
           </p>
         </>
       )}
@@ -235,20 +233,22 @@ type TooltipProps = {
   payload?: { payload: ConsumptionPoint }[]
   unit: "L" | "kWh"
   granularity: Granularity
+  per100: string
 }
 
 /** Підказка: «Mar 2026», «6.8 L/100 km», «1 240 km · 84.3 L». */
-function ConsumptionTooltip({ active, payload, unit, granularity }: TooltipProps) {
+function ConsumptionTooltip({ active, payload, unit, granularity, per100 }: TooltipProps) {
+  const f = useFormat()
   const p = payload?.[0]?.payload
   if (!active || !p) return null
   return (
     <div className="rounded-[12px] border border-[#E5E9F0] bg-white px-3 py-2 text-[13px] shadow-[0_8px_24px_rgba(15,23,42,0.12)]">
-      <p className="font-semibold text-[#0B1220]">{granularity === "day" ? format(parseISO(p.key), "d MMM yyyy") : format(parseISO(`${p.key}-01`), "MMM yyyy")}</p>
+      <p className="font-semibold text-[#0B1220]">{granularity === "day" ? f.date(p.key) : f.monthYear(p.key)}</p>
       <p className="mt-0.5 text-[15px] font-bold text-[#1766F2] tabular-nums">
-        {p.value.toFixed(1)} {unit}/100 km
+        {f.number(p.value, 1)} {per100}
       </p>
       <p className="text-[#5B6475] tabular-nums">
-        {formatKm(p.distance)} · {p.liters.toFixed(1)} {unit}
+        {f.km(p.distance)} · {f.number(p.liters, 1)} {f.units[unit]}
       </p>
     </div>
   )

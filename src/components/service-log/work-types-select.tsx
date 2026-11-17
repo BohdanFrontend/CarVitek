@@ -2,6 +2,7 @@
 
 import { Combobox } from "@base-ui/react/combobox"
 import { Check, X } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { cn } from "cn"
 
 import { WorkTypeIcon } from "@/components/maintenance/work-type-icon"
@@ -31,6 +32,7 @@ export function WorkTypesSelect({
   describedBy?: string
 }) {
   const selected = options.filter((o) => value.includes(o.id))
+  const t = useTranslations("serviceLog.form")
 
   return (
     <Combobox.Root
@@ -57,7 +59,7 @@ export function WorkTypesSelect({
           {(items: WorkTypeOption[]) => (
             <Combobox.Chips
               className="flex w-full flex-wrap items-center gap-1.5"
-              aria-label={items.length > 0 ? "Selected work types" : undefined}
+              aria-label={items.length > 0 ? t("selectedWorkTypes") : undefined}
             >
               {items.map((item) => (
                 <Combobox.Chip
@@ -68,7 +70,7 @@ export function WorkTypesSelect({
                   <WorkTypeIcon code={item.code} size="sm" className="size-6 rounded-[6px]" />
                   {item.name}
                   <Combobox.ChipRemove
-                    aria-label={`Remove ${item.name}`}
+                    aria-label={t("removeWorkType", { name: item.name })}
                     className="grid size-6 place-items-center rounded-[6px] text-[#5B6475] hover:bg-white hover:text-[#0B1220]"
                   >
                     <X className="size-3.5" aria-hidden />
@@ -78,7 +80,7 @@ export function WorkTypesSelect({
               <Combobox.Input
                 id={id}
                 onBlur={onBlur}
-                placeholder={items.length > 0 ? "Add more…" : "Search work types, e.g. Oil change"}
+                placeholder={items.length > 0 ? t("addMore") : t("searchWorkTypes")}
                 aria-invalid={invalid || undefined}
                 aria-describedby={describedBy}
                 className="h-8 min-w-36 flex-1 border-0 bg-transparent px-1.5 text-base text-[#0B1220] outline-none placeholder:text-[#8A93A3]"
@@ -92,7 +94,7 @@ export function WorkTypesSelect({
         <Combobox.Positioner sideOffset={6} className="isolate z-50 outline-none">
           <Combobox.Popup className="max-h-[min(var(--available-height),20rem)] w-(--anchor-width) max-w-(--available-width) overflow-y-auto overscroll-contain rounded-xl bg-white p-1.5 text-[#0B1220] shadow-lg ring-1 ring-[#0F172A]/10">
             <Combobox.Empty>
-              <p className="px-3 py-2 text-sm text-[#5B6475]">No work types found.</p>
+              <p className="px-3 py-2 text-sm text-[#5B6475]">{t("noWorkTypes")}</p>
             </Combobox.Empty>
             <Combobox.List>
               {(item: WorkTypeOption) => (

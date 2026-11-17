@@ -1,22 +1,24 @@
 import { z } from "zod"
 
+import { msg } from "@/i18n/messages"
+
 const intervalKm = z
-  .number({ error: "Enter kilometres" })
-  .int("Use whole kilometres")
-  .min(100, "At least 100 km")
-  .max(1_000_000, "At most 1 000 000 km")
+  .number({ error: "validation.enterKm" })
+  .int("validation.wholeKm")
+  .min(100, msg("validation.kmMin", { km: 100 }))
+  .max(1_000_000, msg("validation.mileageMax", { km: 1_000_000 }))
   .nullable()
 
 const intervalMonths = z
-  .number({ error: "Enter months" })
-  .int("Use whole months")
-  .min(1, "At least 1 month")
-  .max(240, "At most 240 months")
+  .number({ error: "validation.enterMonths" })
+  .int("validation.wholeMonths")
+  .min(1, "validation.monthsMin")
+  .max(240, "validation.monthsMax")
   .nullable()
 
 const atLeastOne = (d: { interval_km: number | null; interval_months: number | null }) =>
   d.interval_km != null || d.interval_months != null
-const atLeastOneError = { message: "Set a distance or a time interval", path: ["interval_km"] }
+const atLeastOneError = { message: "validation.intervalRequired", path: ["interval_km"] }
 
 /**
  * Індивідуальний інтервал роботи для авто. NULL = «як у довіднику» (так задано схемою БД),
@@ -33,7 +35,7 @@ export type IntervalRuleInput = z.input<typeof intervalRuleSchema>
 /** Власна робота користувача. */
 export const customTaskSchema = z
   .object({
-    name: z.string().trim().min(1, "Enter a name").max(100, "At most 100 characters"),
+    name: z.string().trim().min(1, "validation.enterName").max(100, msg("validation.maxChars", { max: 100 })),
     interval_km: intervalKm,
     interval_months: intervalMonths,
   })

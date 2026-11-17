@@ -1,5 +1,6 @@
 import { Car, Plus } from "lucide-react"
 import type { Metadata } from "next"
+import { getTranslations } from "next-intl/server"
 import Link from "next/link"
 
 import { PageTitle } from "@/components/app-shell/page-title"
@@ -9,15 +10,18 @@ import { getCarPhotoUrls } from "@/lib/cars/photos"
 import { getMaintenancePlan } from "@/lib/dashboard/get-dashboard-data"
 import { healthScore } from "@/lib/maintenance/plan"
 
-export const metadata: Metadata = { title: "My Garage" }
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: (await getTranslations("garage"))("title") }
+}
 
 export default async function GaragePage() {
+  const t = await getTranslations("garage")
   const { cars, activeCar } = await getActiveCar()
 
   if (!cars.length) {
     return (
       <div>
-        <PageTitle>My Garage</PageTitle>
+        <PageTitle>{t("title")}</PageTitle>
         <EmptyGarage />
       </div>
     )
@@ -31,7 +35,7 @@ export default async function GaragePage() {
 
   return (
     <div>
-      <PageTitle>My Garage</PageTitle>
+      <PageTitle>{t("title")}</PageTitle>
       <div className="mt-6 grid grid-cols-1 gap-5 md:grid-cols-2 lg:gap-6 xl:grid-cols-3">
         {cars.map((car, i) => (
           <CarCard
@@ -57,22 +61,23 @@ export default async function GaragePage() {
   )
 }
 
-function EmptyGarage() {
+async function EmptyGarage() {
+  const t = await getTranslations()
   return (
     <div className="mt-6 flex flex-col items-center rounded-[20px] border border-[rgba(15,23,42,0.04)] bg-white px-6 py-16 text-center shadow-[0_10px_40px_rgba(15,23,42,0.08)] lg:py-20">
       <span className="grid size-20 place-items-center rounded-full bg-[#E8F0FE] text-[#1766F2]">
         <Car className="size-9" strokeWidth={1.8} aria-hidden />
       </span>
-      <h2 className="mt-5 text-xl font-bold text-[#0B1220]">No cars yet</h2>
+      <h2 className="mt-5 text-xl font-bold text-[#0B1220]">{t("garage.emptyTitle")}</h2>
       <p className="mt-1.5 max-w-sm text-[15px] text-[#5B6475]">
-        Add your first car to start tracking its maintenance
+        {t("garage.emptyText")}
       </p>
       <Link
         href="/garage/new"
         className="mt-6 inline-flex h-12 items-center gap-2 rounded-[12px] bg-[#1766F2] px-6 text-base font-semibold text-white transition-colors outline-none hover:bg-[#0F55D6] focus-visible:ring-3 focus-visible:ring-[#1766F2]/40"
       >
         <Plus className="size-5" aria-hidden />
-        Add car
+        {t("common.addCar")}
       </Link>
     </div>
   )

@@ -39,6 +39,72 @@ export type Database = {
   }
   public: {
     Tables: {
+      car_documents: {
+        Row: {
+          car_id: string
+          cost: number | null
+          created_at: string
+          expense_id: string | null
+          expiry_date: string | null
+          file_path: string | null
+          id: string
+          issued_by: string | null
+          note: string | null
+          number: string | null
+          remind_days: number | null
+          start_date: string | null
+          title: string | null
+          type: Database["public"]["Enums"]["document_type"]
+        }
+        Insert: {
+          car_id: string
+          cost?: number | null
+          created_at?: string
+          expense_id?: string | null
+          expiry_date?: string | null
+          file_path?: string | null
+          id?: string
+          issued_by?: string | null
+          note?: string | null
+          number?: string | null
+          remind_days?: number | null
+          start_date?: string | null
+          title?: string | null
+          type: Database["public"]["Enums"]["document_type"]
+        }
+        Update: {
+          car_id?: string
+          cost?: number | null
+          created_at?: string
+          expense_id?: string | null
+          expiry_date?: string | null
+          file_path?: string | null
+          id?: string
+          issued_by?: string | null
+          note?: string | null
+          number?: string | null
+          remind_days?: number | null
+          start_date?: string | null
+          title?: string | null
+          type?: Database["public"]["Enums"]["document_type"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "car_documents_car_id_fkey"
+            columns: ["car_id"]
+            isOneToOne: false
+            referencedRelation: "cars"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "car_documents_expense_id_fkey"
+            columns: ["expense_id"]
+            isOneToOne: false
+            referencedRelation: "expenses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       car_maintenance_rules: {
         Row: {
           car_id: string
@@ -365,6 +431,36 @@ export type Database = {
           },
         ]
       }
+      user_settings: {
+        Row: {
+          browser_notifications: boolean
+          currency: string
+          email_reminders: boolean
+          language: string
+          remind_when: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          browser_notifications?: boolean
+          currency?: string
+          email_reminders?: boolean
+          language?: string
+          remind_when?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Update: {
+          browser_notifications?: boolean
+          currency?: string
+          email_reminders?: boolean
+          language?: string
+          remind_when?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -373,6 +469,14 @@ export type Database = {
       is_car_owner: { Args: { p_car_id: string }; Returns: boolean }
     }
     Enums: {
+      document_type:
+        | "osago"
+        | "casco"
+        | "green_card"
+        | "tech_inspection"
+        | "registration"
+        | "warranty"
+        | "other"
       engine_type: "petrol" | "diesel" | "lpg" | "hybrid" | "electric"
       expense_category:
         | "repair"
@@ -513,6 +617,15 @@ export const Constants = {
   },
   public: {
     Enums: {
+      document_type: [
+        "osago",
+        "casco",
+        "green_card",
+        "tech_inspection",
+        "registration",
+        "warranty",
+        "other",
+      ],
       engine_type: ["petrol", "diesel", "lpg", "hybrid", "electric"],
       expense_category: [
         "repair",

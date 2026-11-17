@@ -1,6 +1,11 @@
+"use client"
+
 import type { LucideIcon } from "lucide-react"
+import { useTranslations } from "next-intl"
 import type { ReactNode } from "react"
 import { cn } from "cn"
+
+import { useMessageText } from "@/i18n/use-message"
 
 /** Поле вводу застосунку (48px, radius 12px). З іконкою зліва — pl-12, без неї — додай pl-4. */
 export const inputClass =
@@ -41,10 +46,13 @@ export function Field({
   asGroup?: boolean
   children: ReactNode
 }) {
+  const t = useTranslations("common")
+  // помилки приходять ключами словника (zod / Server Action) — перекладаємо тут
+  const errorText = useMessageText()(error)
   const labelContent = (
     <>
       {label}
-      {optional && <span className="font-normal text-[#5B6475]"> (optional)</span>}
+      {optional && <span className="font-normal text-[#5B6475]"> ({t("optional")})</span>}
     </>
   )
   return (
@@ -73,7 +81,7 @@ export function Field({
       )}
       {error ? (
         <p id={`${id}-error`} className="text-sm text-destructive">
-          {error}
+          {errorText}
         </p>
       ) : (
         hint && (

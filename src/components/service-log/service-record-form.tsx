@@ -3,6 +3,7 @@
 import { Autocomplete } from "@base-ui/react/autocomplete"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { CalendarDays, Gauge, Hammer, Loader2, Package, Save, Store } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { useRouter } from "next/navigation"
 import { useId, useState } from "react"
 import { Controller, useForm, useWatch } from "react-hook-form"
@@ -14,7 +15,8 @@ import { PageTitle } from "@/components/app-shell/page-title"
 import { Field, fieldA11y, inputClass, textareaClass } from "@/components/forms/field"
 import { Button } from "@/components/ui/button"
 import { todayInKyiv } from "@/lib/dates"
-import { formatKm, formatMoney } from "@/lib/format"
+import { useFormat } from "@/i18n/format-client"
+import { useMessageText } from "@/i18n/use-message"
 import type { MutationResult } from "@/lib/server/auth"
 import { createClient } from "@/lib/supabase/client"
 import {
@@ -54,6 +56,10 @@ const money = (n: number) => (n ? String(n) : "")
 
 export function ServiceRecordForm({ userId, car, workTypes, stations, record, presetTypeId }: Props) {
   const router = useRouter()
+  const t = useTranslations("serviceLog.form")
+  const tc = useTranslations("common")
+  const f = useFormat()
+  const text = useMessageText()
   const ids = useId()
   const fid = (name: string) => `${ids}-${name}`
   const isEdit = Boolean(record)
@@ -112,7 +118,7 @@ export function ServiceRecordForm({ userId, car, workTypes, stations, record, pr
         .from(RECEIPTS)
         .upload(path, receipt.blob, { contentType: receipt.contentType, cacheControl: "31536000" })
       if (error) {
-        toast.error("Couldn't upload the receipt. Please try again.")
+        toast.error(text("errors.uploadReceiptFailed"))
         return
       }
       receiptPath = uploaded = path
@@ -128,7 +134,7 @@ export function ServiceRecordForm({ userId, car, workTypes, stations, record, pr
         receiptPath,
       })
     } catch {
-      result = { ok: false, message: "Something went wrong. Please try again." }
+      result = { ok: false, message: "errors.generic" }
     }
 
     // 3) не вдалося — прибираємо щойно завантажений файл
@@ -137,7 +143,7 @@ export function ServiceRecordForm({ userId, car, workTypes, stations, record, pr
       for (const [field, messages] of Object.entries(result.fieldErrors ?? {})) {
         if (messages?.[0]) setError(field as keyof ServiceRecordFormValues, { message: messages[0] })
       }
-      toast.error(result.message)
+      toast.error(text(result.message))
       return
     }
 
@@ -146,7 +152,7 @@ export function ServiceRecordForm({ userId, car, workTypes, stations, record, pr
       setReceipt({ kind: "existing", path: uploaded, url: null, isPdf: receipt.isPdf })
     }
     setDone(true)
-    toast.success(isEdit ? "Changes saved" : "Service record added")
+    toast.success(isEdit ? tc("changesSaved") : t("added"))
     router.push("/service-log")
   }
 
@@ -156,11 +162,11 @@ export function ServiceRecordForm({ userId, car, workTypes, stations, record, pr
       noValidate
       className="rounded-[20px] border border-[rgba(15,23,42,0.04)] bg-white p-5 shadow-[0_10px_40px_rgba(15,23,42,0.08)] md:p-8"
     >
-      <PageTitle>{isEdit ? "Edit service record" : "Add service record"}</PageTitle>
+      <PageTitle>{isEdit ? t("editTitle") : t("addTitle")}</PageTitle>
       <p className="mt-1 text-[15px] text-[#5B6475]">{car.label}</p>
 
       <div className="mt-6 grid grid-cols-1 gap-x-6 gap-y-5 md:grid-cols-2">
-        <Field id={fid("date")} label="Date" icon={CalendarDays} error={errors.performed_at?.message}>
+        <Field id={fid("date")} label={t("date")} icon={CalendarDays} error={errors.performed_at?.message}>
           <input
             id={fid("date")}
             type="date"
@@ -174,10 +180,10 @@ export function ServiceRecordForm({ userId, car, workTypes, stations, record, pr
 
         <Field
           id={fid("mileage")}
-          label="Mileage"
+          label={t("mileage")}
           icon={Gauge}
           error={errors.mileage?.message}
-          hint={willUpdateMileage ? `Car mileage will be updated to ${formatKm(mileageNum)}` : undefined}
+          hint={willUpdateMileage ? t("mileageWillUpdate", { km: f.km(mileageNum) }) : undefined}
         >
           <div className="relative">
             <input
@@ -190,14 +196,14 @@ export function ServiceRecordForm({ userId, car, workTypes, stations, record, pr
               {...register("mileage")}
             />
             <span className="pointer-events-none absolute top-1/2 right-4 -translate-y-1/2 text-[15px] font-medium text-[#5B6475]">
-              km
+              {f.units.km}
             </span>
           </div>
         </Field>
 
         <Field
           id={fid("types")}
-          label="Work types"
+          label={t("workTypes")}
           error={errors.type_ids?.message ?? errors.type_ids?.root?.message}
           className="md:col-span-2"
         >
@@ -219,17 +225,17 @@ export function ServiceRecordForm({ userId, car, workTypes, stations, record, pr
           />
         </Field>
 
-        <Field id={fid("labor")} label="Labor cost" icon={Hammer} error={errors.labor_cost?.message}>
+        <Field id={fid("labor")} label={t("labor")} icon={Hammer} error={errors.labor_cost?.message}>
           <MoneyInput id={fid("labor")} disabled={busy} error={errors.labor_cost?.message} {...register("labor_cost")} />
         </Field>
 
-        <Field id={fid("parts")} label="Parts cost" icon={Package} error={errors.parts_cost?.message}>
+        <Field id={fid("parts")} label={t("parts")} icon={Package} error={errors.parts_cost?.message}>
           <MoneyInput id={fid("parts")} disabled={busy} error={errors.parts_cost?.message} {...register("parts_cost")} />
         </Field>
 
         <Field
           id={fid("station")}
-          label="Service station"
+          label={t("station")}
           icon={Store}
           optional
           error={errors.service_station?.message}
@@ -248,7 +254,7 @@ export function ServiceRecordForm({ userId, car, workTypes, stations, record, pr
                   id={fid("station")}
                   ref={field.ref}
                   onBlur={field.onBlur}
-                  placeholder="e.g. AutoExpert"
+                  placeholder={t("stationPlaceholder")}
                   autoComplete="off"
                   disabled={busy}
                   className={inputClass}
@@ -278,15 +284,15 @@ export function ServiceRecordForm({ userId, car, workTypes, stations, record, pr
 
         <div className="flex items-end md:pb-1">
           <p className="text-[15px] text-[#5B6475]">
-            Total: <span className="text-lg font-bold text-[#0B1220]">{formatMoney(totalPreview)}</span>
+            {t("total")} <span className="text-lg font-bold text-[#0B1220]">{f.moneyInput(totalPreview)}</span>
           </p>
         </div>
 
-        <Field id={fid("comment")} label="Comment" optional error={errors.comment?.message} className="md:col-span-2">
+        <Field id={fid("comment")} label={t("comment")} optional error={errors.comment?.message} className="md:col-span-2">
           <textarea
             id={fid("comment")}
             rows={3}
-            placeholder="e.g. Regular service, front axle"
+            placeholder={t("commentPlaceholder")}
             disabled={busy}
             className={textareaClass}
             {...fieldA11y(fid("comment"), errors.comment?.message)}
@@ -296,7 +302,7 @@ export function ServiceRecordForm({ userId, car, workTypes, stations, record, pr
 
         <div className="grid grid-cols-1 gap-2 md:col-span-2">
           <span className="text-[15px] font-semibold text-[#0B1220]">
-            Receipt <span className="font-normal text-[#5B6475]">(optional)</span>
+            {t("receipt")} <span className="font-normal text-[#5B6475]">({tc("optional")})</span>
           </span>
           <ReceiptDropzone value={receipt} onChange={setReceipt} disabled={busy} />
         </div>
@@ -309,7 +315,7 @@ export function ServiceRecordForm({ userId, car, workTypes, stations, record, pr
           className="h-14 w-full gap-2.5 rounded-[12px] bg-[#1766F2] text-[17px] font-semibold text-white shadow-[0_8px_20px_rgba(23,102,242,0.25)] hover:bg-[#0F55D6] lg:text-lg lg:shadow-none"
         >
           {busy ? <Loader2 className="size-5 animate-spin" aria-hidden /> : <Save className="size-5" aria-hidden />}
-          {busy ? "Saving…" : "Save"}
+          {busy ? tc("saving") : tc("save")}
         </Button>
       </div>
     </form>
@@ -322,6 +328,7 @@ function MoneyInput({
   error,
   ...props
 }: React.ComponentProps<"input"> & { id: string; error?: string }) {
+  const f = useFormat()
   return (
     <div className="relative">
       <input
@@ -334,7 +341,7 @@ function MoneyInput({
         {...props}
       />
       <span className="pointer-events-none absolute top-1/2 right-4 -translate-y-1/2 text-[15px] font-medium text-[#5B6475]">
-        ₴
+        {f.inputSymbol}
       </span>
     </div>
   )

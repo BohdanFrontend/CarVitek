@@ -1,6 +1,6 @@
+import { useTranslations } from "next-intl"
 import { cn } from "cn"
 
-import { STATUS_LABELS } from "@/lib/maintenance/describe"
 import type { MaintenanceStatus } from "@/lib/maintenance/plan"
 
 export const STATUS_STYLES: Record<MaintenanceStatus, { badge: string; bar: string; dot: string }> = {
@@ -12,6 +12,7 @@ export const STATUS_STYLES: Record<MaintenanceStatus, { badge: string; bar: stri
 
 /** Статусний бейдж роботи ТО: текст завжди поруч із кольором. */
 export function StatusBadge({ status, className }: { status: MaintenanceStatus; className?: string }) {
+  const t = useTranslations("planner")
   return (
     <span
       className={cn(
@@ -20,7 +21,7 @@ export function StatusBadge({ status, className }: { status: MaintenanceStatus; 
         className
       )}
     >
-      {STATUS_LABELS[status]}
+      {t(`status.${status}`)}
     </span>
   )
 }
