@@ -19,13 +19,13 @@ export async function saveExpense({
   data: ExpenseInput
 }): Promise<MutationResult> {
   if (!idSchema.safeParse(carId).success || (id && !idSchema.safeParse(id).success)) {
-    return { ok: false, message: "Invalid request." }
+    return { ok: false, message: "errors.invalidRequest" }
   }
   const parsed = expenseSchema.safeParse(data)
   if (!parsed.success) {
     return {
       ok: false,
-      message: "Please check the highlighted fields.",
+      message: "errors.checkFields",
       fieldErrors: z.flattenError(parsed.error).fieldErrors,
     }
   }
@@ -36,17 +36,17 @@ export async function saveExpense({
 
   if (id) {
     const { data: existing } = await supabase.from("expenses").select("car_id").eq("id", id).maybeSingle()
-    if (!existing || existing.car_id !== carId) return { ok: false, message: "This expense doesn't exist or was deleted." }
+    if (!existing || existing.car_id !== carId) return { ok: false, message: "errors.expenseNotFound" }
     const { error } = await supabase.from("expenses").update(parsed.data).eq("id", id)
     if (error) {
       console.error("saveExpense update:", error)
-      return { ok: false, message: "Couldn't save the changes. Please try again." }
+      return { ok: false, message: "errors.saveChangesFailed" }
     }
   } else {
     const { error } = await supabase.from("expenses").insert({ car_id: carId, ...parsed.data })
     if (error) {
       console.error("saveExpense insert:", error)
-      return { ok: false, message: "Couldn't save the expense. Please try again." }
+      return { ok: false, message: "errors.saveExpenseFailed" }
     }
   }
   revalidatePath("/", "layout")
@@ -54,7 +54,7 @@ export async function saveExpense({
 }
 
 export async function deleteExpense(id: string): Promise<MutationResult> {
-  if (!idSchema.safeParse(id).success) return { ok: false, message: "Invalid request." }
+  if (!idSchema.safeParse(id).success) return { ok: false, message: "errors.invalidRequest" }
   const { supabase, userId } = await getActionContext()
   if (!userId) return NOT_SIGNED_IN
 
@@ -62,7 +62,7 @@ export async function deleteExpense(id: string): Promise<MutationResult> {
   const { data, error } = await supabase.from("expenses").delete().eq("id", id).select("id")
   if (error || !data?.length) {
     if (error) console.error("deleteExpense:", error)
-    return { ok: false, message: "Couldn't delete the expense. Please try again." }
+    return { ok: false, message: "errors.deleteExpenseFailed" }
   }
   revalidatePath("/", "layout")
   return { ok: true }

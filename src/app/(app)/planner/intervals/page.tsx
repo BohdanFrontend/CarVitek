@@ -1,7 +1,8 @@
 import type { Metadata } from "next"
+import { getTranslations } from "next-intl/server"
 
 import { BackLink } from "@/components/common/back-link"
-import { NoCarState } from "@/components/common/empty-state"
+import { NoCarState } from "@/components/common/no-car-state"
 import { PageHeader } from "@/components/common/page-header"
 import { IntervalsManager, type IntervalRow } from "@/components/planner/intervals-manager"
 import { getActiveCar } from "@/lib/cars/active-car"
@@ -9,11 +10,13 @@ import { carLabel } from "@/lib/cars/format"
 import { getMaintenanceTypes, typesForEngine } from "@/lib/maintenance/types"
 import { createClient } from "@/lib/supabase/server"
 
-export const metadata: Metadata = { title: "Maintenance intervals" }
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: (await getTranslations("planner.intervals"))("metaTitle") }
+}
 
 export default async function IntervalsPage() {
-  const { activeCar } = await getActiveCar()
-  if (!activeCar) return <NoCarState title="Maintenance intervals" what="maintenance schedule" />
+  const [{ activeCar }, t] = await Promise.all([getActiveCar(), getTranslations("planner")])
+  if (!activeCar) return <NoCarState title={t("intervals.metaTitle")} what={t("noCarWhat")} />
 
   const supabase = await createClient()
   const [types, rules] = await Promise.all([
@@ -44,8 +47,8 @@ export default async function IntervalsPage() {
 
   return (
     <div>
-      <BackLink href="/planner" label="Back to Planner" />
-      <PageHeader title="Maintenance types & intervals" description={`Intervals for ${carLabel(activeCar)}`} />
+      <BackLink href="/planner" label={t("intervals.back")} />
+      <PageHeader title={t("intervals.title")} description={t("intervals.subtitle", { car: carLabel(activeCar) })} />
       <IntervalsManager carId={activeCar.id} rows={rows} />
     </div>
   )

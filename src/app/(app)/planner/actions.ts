@@ -15,7 +15,7 @@ const idSchema = z.uuid()
 
 const invalid = (error: z.ZodError): MutationResult => ({
   ok: false,
-  message: error.issues[0]?.message ?? "Please check the values.",
+  message: error.issues[0]?.message ?? "errors.checkFields",
   fieldErrors: z.flattenError(error).fieldErrors,
 })
 
@@ -39,7 +39,7 @@ export async function saveIntervalRule(
   input: IntervalRuleInput
 ): Promise<MutationResult> {
   if (!idSchema.safeParse(carId).success || !idSchema.safeParse(typeId).success) {
-    return { ok: false, message: "Invalid request." }
+    return { ok: false, message: "errors.invalidRequest" }
   }
   const parsed = intervalRuleSchema.safeParse(input)
   if (!parsed.success) return invalid(parsed.error)
@@ -48,7 +48,7 @@ export async function saveIntervalRule(
   if (!userId) return NOT_SIGNED_IN
   if (!car) return CAR_NOT_FOUND
   const type = await getType(supabase, typeId)
-  if (!type) return { ok: false, message: "This maintenance task doesn't exist." }
+  if (!type) return { ok: false, message: "errors.taskNotFound" }
 
   const { interval_km, interval_months, is_enabled } = parsed.data
   const row = {
@@ -65,7 +65,7 @@ export async function saveIntervalRule(
       : await supabase.from("car_maintenance_rules").upsert(row)
   if (error) {
     console.error("saveIntervalRule:", error)
-    return { ok: false, message: "Couldn't save the interval. Please try again." }
+    return { ok: false, message: "errors.saveIntervalFailed" }
   }
   revalidatePath("/", "layout")
   return { ok: true }
@@ -74,7 +74,7 @@ export async function saveIntervalRule(
 /** Повертає типовий інтервал з довідника (видаляє правило). */
 export async function resetIntervalRule(carId: string, typeId: string): Promise<MutationResult> {
   if (!idSchema.safeParse(carId).success || !idSchema.safeParse(typeId).success) {
-    return { ok: false, message: "Invalid request." }
+    return { ok: false, message: "errors.invalidRequest" }
   }
   const { supabase, userId, car } = await getActionContext(carId)
   if (!userId) return NOT_SIGNED_IN
@@ -86,7 +86,7 @@ export async function resetIntervalRule(carId: string, typeId: string): Promise<
     .match({ car_id: carId, maintenance_type_id: typeId })
   if (error) {
     console.error("resetIntervalRule:", error)
-    return { ok: false, message: "Couldn't reset the interval. Please try again." }
+    return { ok: false, message: "errors.resetIntervalFailed" }
   }
   revalidatePath("/", "layout")
   return { ok: true }
@@ -107,7 +107,7 @@ export async function createCustomTask(input: CustomTaskInput): Promise<Mutation
     .single()
   if (error || !data) {
     console.error("createCustomTask:", error)
-    return { ok: false, message: "Couldn't create the task. Please try again." }
+    return { ok: false, message: "errors.createTaskFailed" }
   }
   revalidatePath("/", "layout")
   return { ok: true, id: data.id }

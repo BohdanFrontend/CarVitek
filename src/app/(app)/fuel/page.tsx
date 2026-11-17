@@ -1,6 +1,7 @@
 import type { Metadata } from "next"
+import { getTranslations } from "next-intl/server"
 
-import { NoCarState } from "@/components/common/empty-state"
+import { NoCarState } from "@/components/common/no-car-state"
 import { LoadMore, PAGE_SIZE, parseLimit } from "@/components/common/load-more"
 import { FuelLog } from "@/components/fuel/fuel-log"
 import { getActiveCar } from "@/lib/cars/active-car"
@@ -9,14 +10,16 @@ import { todayInKyiv } from "@/lib/dates"
 import { consumptionForPeriod, type ConsumptionPeriod } from "@/lib/fuel/consumption"
 import { getFuelLog } from "@/lib/fuel/queries"
 
-export const metadata: Metadata = { title: "Fuel Log" }
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: (await getTranslations("fuel"))("title") }
+}
 
 const PERIODS: ConsumptionPeriod[] = ["6m", "1y", "all"]
 
 export default async function FuelPage({ searchParams }: PageProps<"/fuel">) {
   const sp = await searchParams
-  const { activeCar } = await getActiveCar()
-  if (!activeCar) return <NoCarState title="Fuel Log" what="fuel consumption" />
+  const [{ activeCar }, t] = await Promise.all([getActiveCar(), getTranslations("fuel")])
+  if (!activeCar) return <NoCarState title={t("title")} what={t("noCarWhat")} />
 
   const limit = parseLimit(sp.limit)
   const period = PERIODS.find((p) => p === sp.period) ?? "6m"

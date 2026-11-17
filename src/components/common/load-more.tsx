@@ -1,3 +1,4 @@
+import { getTranslations } from "next-intl/server"
 import Link from "next/link"
 
 import { secondaryButtonClass } from "./buttons"
@@ -11,7 +12,7 @@ export function parseLimit(value: string | string[] | undefined) {
 }
 
 /** «Load more» — посилання на ту саму сторінку з більшим limit (без скролу вгору). */
-export function LoadMore({
+export async function LoadMore({
   hasMore,
   limit,
   params,
@@ -21,13 +22,14 @@ export function LoadMore({
   params: Record<string, string | undefined>
 }) {
   if (!hasMore) return null
+  const t = await getTranslations("common")
   const query = new URLSearchParams()
   for (const [k, v] of Object.entries(params)) if (v) query.set(k, v)
   query.set("limit", String(limit + PAGE_SIZE))
   return (
     <div className="mt-5 flex justify-center">
       <Link href={`?${query}`} scroll={false} className={`${secondaryButtonClass} max-lg:h-12 max-lg:w-full max-lg:rounded-[14px]`}>
-        Load more
+        {t("loadMore")}
       </Link>
     </div>
   )

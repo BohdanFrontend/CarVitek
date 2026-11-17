@@ -9,15 +9,15 @@ export const fuelRecordSchema = z.object({
   filled_at: pastDate,
   mileage: mileageNumber,
   liters: z
-    .number({ error: "Enter the amount" })
-    .gt(0, "Amount must be greater than 0")
-    .max(1000, "At most 1000")
-    .refine(twoDecimals, { message: "At most 2 decimal places" }),
+    .number({ error: "validation.enterQuantity" })
+    .gt(0, "validation.amountPositive")
+    .max(1000, "validation.quantityMax")
+    .refine(twoDecimals, { message: "validation.twoDecimals" }),
   price_per_liter: z
-    .number({ error: "Enter the price" })
-    .min(0, "Price can't be negative")
-    .max(10_000, "Price is too large")
-    .refine(twoDecimals, { message: "At most 2 decimal places" }),
+    .number({ error: "validation.enterPrice" })
+    .min(0, "validation.priceNegative")
+    .max(10_000, "validation.priceTooLarge")
+    .refine(twoDecimals, { message: "validation.twoDecimals" }),
   is_full_tank: z.boolean(),
   station: optionalText(120),
 })

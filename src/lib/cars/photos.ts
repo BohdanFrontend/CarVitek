@@ -6,7 +6,7 @@ const SIGNED_URL_TTL = 60 * 60 // 1 година
  * Signed URL для файлів із приватного бакета — одним запитом для всіх шляхів.
  * Повертає мапу шлях → URL (відсутні/помилкові шляхи просто пропускаються).
  */
-export async function getSignedUrls(bucket: "car-photos" | "receipts", paths: (string | null)[]) {
+export async function getSignedUrls(bucket: "car-photos" | "receipts" | "documents", paths: (string | null)[]) {
   const unique = [...new Set(paths.filter((p): p is string => Boolean(p)))]
   const urls = new Map<string, string>()
   if (!unique.length) return urls

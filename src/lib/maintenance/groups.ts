@@ -2,14 +2,6 @@
 export const WORK_GROUPS = ["oil", "filters", "brakes", "tires", "other"] as const
 export type WorkGroup = (typeof WORK_GROUPS)[number]
 
-export const WORK_GROUP_LABELS: Record<WorkGroup, string> = {
-  oil: "Oil",
-  filters: "Filters",
-  brakes: "Brakes",
-  tires: "Tires",
-  other: "Other",
-}
-
 const GROUP_BY_CODE: Record<string, WorkGroup> = {
   engine_oil: "oil",
   gearbox_oil: "oil",

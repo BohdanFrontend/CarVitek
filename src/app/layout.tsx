@@ -1,6 +1,11 @@
 import type { Metadata, Viewport } from "next"
+import { NextIntlClientProvider } from "next-intl"
+import { getLocale, getTranslations } from "next-intl/server"
 import { Geist_Mono, Inter } from "next/font/google"
 import "./globals.css"
+
+import { FormatProvider } from "@/i18n/format-client"
+import { getDisplayCurrency } from "@/i18n/format-server"
 
 // Inter підтримує кирилицю; змінна --font-sans підхоплюється темою в globals.css
 const inter = Inter({
@@ -19,19 +24,23 @@ export const viewport: Viewport = {
   viewportFit: "cover",
 }
 
-export const metadata: Metadata = {
-  title: {
-    default: "CarVitex — your car's service book",
-    template: "%s · CarVitex",
-  },
-  description:
-    "Track your car's maintenance, fuel-ups and expenses, with service reminders scheduled automatically by mileage and time.",
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("meta")
+  return {
+    title: { default: t("title"), template: "%s · CarVitex" },
+    description: t("description"),
+  }
 }
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  const [locale, display] = await Promise.all([getLocale(), getDisplayCurrency()])
   return (
-    <html lang="en" className={`${inter.variable} ${geistMono.variable} h-full antialiased`}>
-      <body className="flex min-h-full flex-col font-sans">{children}</body>
+    <html lang={locale} className={`${inter.variable} ${geistMono.variable} h-full antialiased`}>
+      <body className="flex min-h-full flex-col font-sans">
+        <NextIntlClientProvider>
+          <FormatProvider currency={display.currency} rate={display.rate}>{children}</FormatProvider>
+        </NextIntlClientProvider>
+      </body>
     </html>
   )
 }

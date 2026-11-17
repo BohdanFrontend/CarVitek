@@ -1,6 +1,7 @@
 "use client"
 
 import { LogOut } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { useTransition } from "react"
 
 import { signOut } from "@/app/(auth)/actions"
@@ -26,13 +27,14 @@ function initials({ name, email }: ShellUser) {
 
 /** Аватар з ініціалами й меню: ім'я, email, вихід. */
 export function UserMenu({ user }: { user: ShellUser }) {
+  const t = useTranslations("nav")
   const [pending, startTransition] = useTransition()
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
         className="rounded-full outline-none focus-visible:ring-3 focus-visible:ring-[#1766F2]/40"
-        aria-label="Account menu"
+        aria-label={t("accountMenu")}
       >
         <Avatar className="size-10 after:border-0">
           <AvatarFallback className="bg-[#E8F0FE] text-[15px] font-bold text-[#1766F2]">
@@ -44,7 +46,7 @@ export function UserMenu({ user }: { user: ShellUser }) {
         <DropdownMenuGroup>
           <DropdownMenuLabel className="px-2.5 py-2">
             <span className="block truncate text-[15px] font-semibold text-[#0B1220]">
-              {user.name || "My account"}
+              {user.name || t("myAccount")}
             </span>
             <span className="block truncate text-[13px] font-normal text-[#5B6475]">
               {user.email}
@@ -58,7 +60,7 @@ export function UserMenu({ user }: { user: ShellUser }) {
           className="h-10 gap-2.5 px-2.5 text-[15px]"
         >
           <LogOut className="size-4.5" aria-hidden />
-          Sign out
+          {t("signOut")}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

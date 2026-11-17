@@ -1,4 +1,5 @@
 import { FileText } from "lucide-react"
+import { useTranslations } from "next-intl"
 import Image from "next/image"
 import { cn } from "cn"
 
@@ -19,6 +20,7 @@ export function ReceiptLink({
   size?: "sm" | "lg"
   className?: string
 }) {
+  const t = useTranslations("serviceLog.receipt")
   if (!path || !url) return size === "sm" ? <span className="text-[#8A93A3]">—</span> : null
   const pdf = isPdfPath(path)
   const px = size === "lg" ? 48 : 32
@@ -27,7 +29,7 @@ export function ReceiptLink({
       href={url}
       target="_blank"
       rel="noopener noreferrer"
-      aria-label={pdf ? "Open receipt (PDF) in a new tab" : "Open receipt photo in a new tab"}
+      aria-label={pdf ? t("openPdf") : t("openPhoto")}
       className={cn(
         "inline-grid shrink-0 place-items-center overflow-hidden border border-[#E5E9F0] bg-[#F5F7FB] text-[#5B6475] outline-none hover:border-[#1766F2] focus-visible:ring-3 focus-visible:ring-[#1766F2]/30",
         size === "lg" ? "size-12 rounded-[10px]" : "size-8 rounded-[6px]",

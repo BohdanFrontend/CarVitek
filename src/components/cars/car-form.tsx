@@ -12,6 +12,7 @@ import {
   RectangleHorizontal,
   Save,
 } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { useRouter } from "next/navigation"
 import { useId, useMemo, useState } from "react"
 import { Controller, useForm } from "react-hook-form"
@@ -29,7 +30,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { ENGINE_LABELS, ENGINE_TYPES, type EngineType } from "@/lib/cars/format"
+import { useMessageText } from "@/i18n/use-message"
+import { ENGINE_TYPES, type EngineType } from "@/lib/cars/format"
 import { CAR_MAKES } from "@/lib/cars/makes"
 import { createClient } from "@/lib/supabase/client"
 import {
@@ -72,6 +74,8 @@ const yearItems = Array.from({ length: maxCarYear() - MIN_YEAR + 1 }, (_, i) => 
 
 export function CarForm({ userId, car }: CarFormProps) {
   const router = useRouter()
+  const t = useTranslations()
+  const text = useMessageText()
   const ids = useId()
   const fieldId = (name: string) => `${ids}-${name}`
   const isEdit = Boolean(car)
@@ -132,7 +136,7 @@ export function CarForm({ userId, car }: CarFormProps) {
         cacheControl: "31536000",
       })
       if (error) {
-        toast.error("Couldn't upload the photo. Please try again.")
+        toast.error(t("errors.uploadPhotoFailed"))
         return
       }
       photoPath = uploadedPath = path
@@ -146,7 +150,7 @@ export function CarForm({ userId, car }: CarFormProps) {
         ? await updateCar(carId, input, photoPath)
         : await createCar(carId, input, photoPath)
     } catch {
-      result = { ok: false, message: "Something went wrong. Please try again." }
+      result = { ok: false, message: "errors.generic" }
     }
 
     // 3) не вдалося — прибираємо щойно завантажений файл
@@ -155,7 +159,7 @@ export function CarForm({ userId, car }: CarFormProps) {
       for (const [field, messages] of Object.entries(result.fieldErrors ?? {})) {
         if (messages?.[0]) setError(field as keyof CarFormValues, { message: messages[0] })
       }
-      toast.error(result.message)
+      toast.error(text(result.message))
       return
     }
 
@@ -163,7 +167,7 @@ export function CarForm({ userId, car }: CarFormProps) {
     // Після успіху фото вже «збережене» — повторне натискання не завантажить його вдруге
     if (uploadedPath) setPhoto({ kind: "existing", path: uploadedPath, url: photo!.url })
     setDone(true)
-    toast.success(isEdit ? "Changes saved" : "Car added to your garage")
+    toast.success(isEdit ? t("common.changesSaved") : t("garage.form.added"))
     router.push("/garage")
   }
 
@@ -173,11 +177,11 @@ export function CarForm({ userId, car }: CarFormProps) {
       noValidate
       className="rounded-[20px] border border-[rgba(15,23,42,0.04)] bg-white p-5 shadow-[0_10px_40px_rgba(15,23,42,0.08)] md:p-8"
     >
-      <PageTitle>{isEdit ? "Edit car" : "Add a car"}</PageTitle>
+      <PageTitle>{isEdit ? t("garage.form.editTitle") : t("garage.form.addTitle")}</PageTitle>
 
       <div className="mt-6 grid grid-cols-1 gap-x-6 gap-y-5 md:grid-cols-2">
         {/* Make — підказки популярних марок, але можна ввести будь-яку */}
-        <Field id={fieldId("make")} label="Make" icon={CarFront} error={errors.make?.message}>
+        <Field id={fieldId("make")} label={t("garage.form.make")} icon={CarFront} error={errors.make?.message}>
           <Controller
             control={control}
             name="make"
@@ -193,7 +197,7 @@ export function CarForm({ userId, car }: CarFormProps) {
                   ref={field.ref}
                   name={field.name}
                   onBlur={field.onBlur}
-                  placeholder="e.g. Volkswagen"
+                  placeholder={t("garage.form.makePlaceholder")}
                   autoComplete="off"
                   disabled={busy}
                   aria-invalid={errors.make ? true : undefined}
@@ -222,10 +226,10 @@ export function CarForm({ userId, car }: CarFormProps) {
           />
         </Field>
 
-        <Field id={fieldId("model")} label="Model" icon={CarFront} error={errors.model?.message}>
+        <Field id={fieldId("model")} label={t("garage.form.model")} icon={CarFront} error={errors.model?.message}>
           <input
             id={fieldId("model")}
-            placeholder="e.g. Golf"
+            placeholder={t("garage.form.modelPlaceholder")}
             autoComplete="off"
             disabled={busy}
             aria-invalid={errors.model ? true : undefined}
@@ -235,7 +239,7 @@ export function CarForm({ userId, car }: CarFormProps) {
           />
         </Field>
 
-        <Field id={fieldId("year")} label="Year" icon={CalendarDays} error={errors.year?.message}>
+        <Field id={fieldId("year")} label={t("garage.form.year")} icon={CalendarDays} error={errors.year?.message}>
           <Controller
             control={control}
             name="year"
@@ -254,7 +258,7 @@ export function CarForm({ userId, car }: CarFormProps) {
                   aria-describedby={errors.year ? `${fieldId("year")}-error` : undefined}
                   className={cn(inputClass, "pr-3 data-placeholder:text-[#8A93A3] data-[size=default]:h-12")}
                 >
-                  <SelectValue placeholder="Select year" />
+                  <SelectValue placeholder={t("garage.form.yearPlaceholder")} />
                 </SelectTrigger>
                 <SelectContent alignItemWithTrigger={false} className="max-h-72">
                   {yearItems.map((item) => (
@@ -270,7 +274,7 @@ export function CarForm({ userId, car }: CarFormProps) {
 
         <Field
           id={fieldId("mileage")}
-          label="Current mileage"
+          label={t("garage.form.mileage")}
           icon={Gauge}
           error={errors.current_mileage?.message}
         >
@@ -279,7 +283,7 @@ export function CarForm({ userId, car }: CarFormProps) {
               id={fieldId("mileage")}
               inputMode="numeric"
               pattern="[0-9]*"
-              placeholder="e.g. 130000"
+              placeholder={t("garage.form.mileagePlaceholder")}
               autoComplete="off"
               disabled={busy}
               aria-invalid={errors.current_mileage ? true : undefined}
@@ -296,7 +300,7 @@ export function CarForm({ userId, car }: CarFormProps) {
         {/* Engine type — сегментований вибір; стрілки клавіатури перемикають варіанти */}
         <Field
           id={fieldId("engine")}
-          label="Engine type"
+          label={t("garage.form.engine")}
           error={errors.engine_type?.message}
           asGroup
           className="md:col-span-2"
@@ -323,7 +327,7 @@ export function CarForm({ userId, car }: CarFormProps) {
                     className="inline-flex h-11 min-w-0 items-center justify-center gap-1.5 rounded-[14px] border border-[#E1E7F0] bg-[#F1F4F9] px-2 text-[14px] font-semibold whitespace-nowrap md:gap-2 md:rounded-full md:px-4.5 md:text-[15px] data-checked:shadow-[0_6px_16px_rgba(23,102,242,0.3)] text-[#0B1220] transition-colors outline-none select-none not-data-checked:hover:bg-[#E7ECF4] focus-visible:ring-3 focus-visible:ring-[#1766F2]/30 data-checked:border-[#1766F2] data-checked:bg-[#1766F2] data-checked:text-white data-disabled:opacity-60"
                   >
                     <EngineIcon type={type} />
-                    {ENGINE_LABELS[type]}
+                    {t(`garage.engine.${type}`)}
                   </Radio.Root>
                 ))}
               </RadioGroup>
@@ -333,14 +337,14 @@ export function CarForm({ userId, car }: CarFormProps) {
 
         <Field
           id={fieldId("plate")}
-          label="Plate number"
+          label={t("garage.form.plate")}
           icon={RectangleHorizontal}
           optional
           error={errors.plate_number?.message}
         >
           <input
             id={fieldId("plate")}
-            placeholder="e.g. AA 1234 BB"
+            placeholder={t("garage.form.platePlaceholder")}
             autoComplete="off"
             maxLength={15}
             disabled={busy}
@@ -353,11 +357,11 @@ export function CarForm({ userId, car }: CarFormProps) {
 
         <Field
           id={fieldId("vin")}
-          label="VIN"
+          label={t("garage.form.vin")}
           icon={Hash}
           optional
           error={errors.vin?.message}
-          hint="17 characters: digits and letters except I, O and Q"
+          hint={t("garage.form.vinHint")}
         >
           <Controller
             control={control}
@@ -370,7 +374,7 @@ export function CarForm({ userId, car }: CarFormProps) {
                 value={field.value ?? ""}
                 onChange={(e) => field.onChange(e.target.value.toUpperCase().replace(/\s/g, ""))}
                 onBlur={field.onBlur}
-                placeholder="e.g. WVWZZZ1KZBW000001"
+                placeholder={t("garage.form.vinPlaceholder")}
                 autoComplete="off"
                 autoCapitalize="characters"
                 spellCheck={false}
@@ -386,7 +390,7 @@ export function CarForm({ userId, car }: CarFormProps) {
 
         <div className="grid grid-cols-1 gap-2 md:col-span-2">
           <span className="text-[15px] font-semibold text-[#0B1220]">
-            Upload photo <span className="font-normal text-[#5B6475]">(optional)</span>
+            {t("garage.form.photo")} <span className="font-normal text-[#5B6475]">({t("common.optional")})</span>
           </span>
           <PhotoDropzone value={photo} onChange={setPhoto} disabled={busy} />
         </div>
@@ -404,7 +408,7 @@ export function CarForm({ userId, car }: CarFormProps) {
           ) : (
             <Save className="size-5" aria-hidden />
           )}
-          {busy ? "Saving…" : "Save car"}
+          {busy ? t("common.saving") : t("garage.form.submit")}
         </Button>
       </div>
     </form>

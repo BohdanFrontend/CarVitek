@@ -1,7 +1,9 @@
 import { ChevronRight, ClipboardList, Wrench } from "lucide-react"
+import { getTranslations } from "next-intl/server"
 import Link from "next/link"
 import { cn } from "cn"
 
+import { getFormat } from "@/i18n/format-server"
 import { describeDue } from "@/lib/maintenance/describe"
 import type { MaintenanceItem, MaintenanceStatus } from "@/lib/maintenance/plan"
 import { dashboardCardClass } from "./card-styles"
@@ -14,14 +16,8 @@ const DOT: Record<Exclude<MaintenanceStatus, "no_data">, string> = {
   ok: "bg-[#22C55E]",
 }
 
-const STATUS_LABEL: Record<Exclude<MaintenanceStatus, "no_data">, string> = {
-  overdue: "Overdue",
-  soon: "Due soon",
-  ok: "On track",
-}
-
-
-export function UpcomingMaintenance({ plan, today }: { plan: MaintenanceItem[]; today: string }) {
+export async function UpcomingMaintenance({ plan, today }: { plan: MaintenanceItem[]; today: string }) {
+  const [t, tp, f] = await Promise.all([getTranslations("dashboard"), getTranslations("planner"), getFormat()])
   const tracked = plan.filter((i) => i.status !== "no_data")
   const withoutHistory = plan.length - tracked.length
   const items = tracked.slice(0, MAX_ITEMS)
@@ -34,11 +30,11 @@ export function UpcomingMaintenance({ plan, today }: { plan: MaintenanceItem[]; 
       <div className="flex items-center justify-between gap-3">
         <h2 id="upcoming-title" className="flex items-center gap-2.5 text-xl font-bold text-[#0B1220] 2xl:text-[24px] 3xl:text-[30px] 4xl:text-[34px]">
           <Wrench className="size-5.5 lg:hidden" strokeWidth={2} aria-hidden />
-          Upcoming maintenance
+          {t("upcoming")}
         </h2>
         <Link
           href="/planner"
-          aria-label="Open maintenance planner"
+          aria-label={t("openPlanner")}
           className="grid size-9 shrink-0 place-items-center rounded-full text-[#0B1220] 3xl:size-11 transition-colors outline-none hover:bg-[#F1F4F9] focus-visible:ring-3 focus-visible:ring-[#1766F2]/30"
         >
           <ChevronRight className="size-5.5 3xl:size-7" aria-hidden />
@@ -50,15 +46,15 @@ export function UpcomingMaintenance({ plan, today }: { plan: MaintenanceItem[]; 
           <span className="grid size-12 place-items-center rounded-full bg-[#E8F0FE] text-[#1766F2]">
             <ClipboardList className="size-6" aria-hidden />
           </span>
-          <p className="mt-3 font-bold text-[#0B1220] 2xl:text-lg 3xl:text-[22px] 4xl:text-[26px]">No service history yet</p>
+          <p className="mt-3 font-bold text-[#0B1220] 2xl:text-lg 3xl:text-[22px] 4xl:text-[26px]">{t("noHistoryTitle")}</p>
           <p className="mt-1 max-w-xs text-sm text-[#5B6475] 2xl:max-w-sm 2xl:text-[15px] 3xl:max-w-md 3xl:text-lg">
-            Add your last service to get maintenance forecasts
+            {t("noHistoryText")}
           </p>
           <Link
             href="/service-log/new"
             className="mt-4 inline-flex h-10 items-center rounded-[10px] bg-[#1766F2] px-4 text-sm font-semibold text-white transition-colors outline-none hover:bg-[#0F55D6] focus-visible:ring-3 focus-visible:ring-[#1766F2]/40"
           >
-            Add service record
+            {t("addServiceRecord")}
           </Link>
         </div>
       ) : (
@@ -75,13 +71,13 @@ export function UpcomingMaintenance({ plan, today }: { plan: MaintenanceItem[]; 
                   <div className="min-w-0 flex-1">
                     <p className="font-semibold text-[#0B1220] 2xl:text-lg 3xl:text-[22px] 4xl:text-[26px]">
                       {item.name}
-                      <span className="sr-only"> — {STATUS_LABEL[status]}</span>
+                      <span className="sr-only"> — {tp(`status.${status}`)}</span>
                     </p>
-                    <p className="text-sm text-[#5B6475] 2xl:mt-0.5 2xl:text-base 3xl:mt-1 3xl:text-lg 4xl:text-xl">{describeDue(item, today)}</p>
+                    <p className="text-sm text-[#5B6475] 2xl:mt-0.5 2xl:text-base 3xl:mt-1 3xl:text-lg 4xl:text-xl">{describeDue(item, today, tp, f)}</p>
                   </div>
                   {status === "overdue" && (
                     <span aria-hidden className="shrink-0 rounded-full bg-[#FDECEC] px-2.5 py-1 text-[13px] font-semibold text-[#DC2626] 2xl:px-3 2xl:text-sm 3xl:px-4 3xl:py-1.5 3xl:text-base 4xl:text-lg">
-                      Overdue
+                      {tp("status.overdue")}
                     </span>
                   )}
                 </li>
@@ -90,7 +86,7 @@ export function UpcomingMaintenance({ plan, today }: { plan: MaintenanceItem[]; 
           </ul>
           {withoutHistory > 0 && (
             <p className="mt-auto border-t border-[#E5E9F0] pt-3 text-sm text-[#5B6475] [&:not(:first-child)]:mt-5 2xl:pt-4 2xl:text-[15px] 3xl:pt-5 3xl:text-lg 4xl:text-xl">
-              {withoutHistory === 1 ? "1 task has" : `${withoutHistory} tasks have`} no service history
+              {t("withoutHistory", { count: withoutHistory })}
             </p>
           )}
         </>

@@ -1,5 +1,6 @@
 import Link from "next/link"
 import type { ReactNode } from "react"
+import { useTranslations } from "next-intl"
 import { cn } from "cn"
 
 import { dashboardCardClass } from "./card-styles"
@@ -22,6 +23,7 @@ type StatCardProps = {
 
 /** Картка показника: назва, значення ліворуч, міні-графік праворуч. */
 export function StatCard({ title, value, sub, chart, chartLabel, emptyHint, emptyAction }: StatCardProps) {
+  const t = useTranslations("common")
   const empty = value == null
 
   return (
@@ -34,7 +36,7 @@ export function StatCard({ title, value, sub, chart, chartLabel, emptyHint, empt
       <h2 className="text-base font-bold text-[#0B1220] lg:text-[17px] 2xl:text-[19px] 3xl:text-[23px] 4xl:text-[27px]">{title}</h2>
       {empty ? (
         <div className="mt-2 2xl:mt-3 3xl:mt-4">
-          <p className="text-xl font-bold text-[#8A93A3] 2xl:text-2xl 3xl:text-[28px] 4xl:text-[32px]">No data yet</p>
+          <p className="text-xl font-bold text-[#8A93A3] 2xl:text-2xl 3xl:text-[28px] 4xl:text-[32px]">{t("noDataYet")}</p>
           <p className="mt-1 text-sm text-[#5B6475] 2xl:text-[15px] 3xl:text-lg 4xl:text-xl">{emptyHint}</p>
           {emptyAction && (
             <Link

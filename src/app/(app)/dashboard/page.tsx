@@ -1,7 +1,9 @@
 import { Car, Plus } from "lucide-react"
 import type { Metadata } from "next"
+import { getTranslations } from "next-intl/server"
 import Link from "next/link"
 
+import { DocumentsAlert } from "@/components/dashboard/documents-alert"
 import { HeroCard } from "@/components/dashboard/hero-card"
 import { SparklineBars } from "@/components/dashboard/sparkline-bars"
 import { SparklineLine } from "@/components/dashboard/sparkline-line"
@@ -12,20 +14,25 @@ import { getActiveCar } from "@/lib/cars/active-car"
 import { getCarPhotoUrls } from "@/lib/cars/photos"
 import { getDashboardData } from "@/lib/dashboard/get-dashboard-data"
 import { todayInKyiv } from "@/lib/dates"
-import { formatMoney } from "@/lib/format"
+import { getDocumentAlerts } from "@/lib/documents/queries"
+import { getFormat } from "@/i18n/format-server"
 
-export const metadata: Metadata = { title: "Dashboard" }
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: (await getTranslations("dashboard"))("title") }
+}
 
 export default async function DashboardPage() {
   const { activeCar } = await getActiveCar()
   if (!activeCar) return <NoCars />
 
-  const [data, photoUrls] = await Promise.all([
+  const [data, photoUrls, docAlerts] = await Promise.all([
     getDashboardData(activeCar),
     getCarPhotoUrls([activeCar.photo_path]),
+    getDocumentAlerts(activeCar.id),
   ])
   const photoUrl = activeCar.photo_path ? (photoUrls.get(activeCar.photo_path) ?? null) : null
   const electric = activeCar.engine_type === "electric"
+  const [t, tf, f] = await Promise.all([getTranslations("dashboard"), getTranslations("fuel"), getFormat()])
 
   const hasSpending = data.monthlySeries.some((m) => m.total > 0)
   const change =
@@ -35,31 +42,33 @@ export default async function DashboardPage() {
 
   return (
     <div className="grid grid-cols-1 gap-4 lg:gap-6 2xl:gap-8 3xl:gap-10 4xl:gap-12">
-      <h1 className="sr-only">Dashboard</h1>
+      <h1 className="sr-only">{t("title")}</h1>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] lg:gap-6 2xl:gap-8 3xl:gap-10 4xl:gap-12">
         <HeroCard car={activeCar} photoUrl={photoUrl} avgConsumption={data.avgConsumption} />
         <UpcomingMaintenance plan={data.plan} today={todayInKyiv()} />
       </div>
 
+      {docAlerts.length > 0 && <DocumentsAlert docs={docAlerts} />}
+
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3 lg:gap-6 2xl:gap-8 3xl:gap-10 4xl:gap-12">
         <StatCard
-          title="Spent this month"
-          value={hasSpending ? formatMoney(data.spentThisMonth) : null}
+          title={t("spentThisMonth")}
+          value={hasSpending ? f.money(data.spentThisMonth) : null}
           sub={change != null && <SpendingChange percent={change} />}
           chart={<SparklineBars values={data.monthlySeries.map((m) => m.total)} color="#5B8DEF" />}
-          chartLabel="Monthly spending over the last 8 months"
-          emptyHint="Add fuel, service or expense records"
-          emptyAction={{ href: "/expenses?tab=records", label: "Add expense" }}
+          chartLabel={t("spendingChart")}
+          emptyHint={t("spendingHint")}
+          emptyAction={{ href: "/expenses?tab=records", label: t("addExpense") }}
         />
         <StatCard
-          title={electric ? "Energy consumption" : "Fuel consumption"}
+          title={electric ? t("energyConsumption") : t("fuelConsumption")}
           value={
             data.avgConsumption != null ? (
               <>
-                {data.avgConsumption.toFixed(1)}
+                {f.number(data.avgConsumption, 1)}
                 <span className="ml-1.5 text-lg font-semibold 3xl:text-2xl 4xl:text-[28px]">
-                  {electric ? "kWh" : "L"}/100 km
+                  {tf("per100", { unit: f.units[electric ? "kWh" : "L"] })}
                 </span>
               </>
             ) : null
@@ -69,21 +78,19 @@ export default async function DashboardPage() {
               <SparklineLine values={data.consumptionSeries} color="#10B981" />
             ) : undefined
           }
-          chartLabel={`${electric ? "Energy" : "Fuel"} consumption for recent full-to-full segments`}
-          emptyHint={
-            electric ? "Add at least two full charges" : "Add at least two full-tank fuel records"
-          }
-          emptyAction={{ href: "/fuel", label: electric ? "Open charging log" : "Open fuel log" }}
+          chartLabel={electric ? t("energyChart") : t("fuelChart")}
+          emptyHint={electric ? t("energyHint") : t("fuelHint")}
+          emptyAction={{ href: "/fuel", label: electric ? t("openChargingLog") : t("openFuelLog") }}
         />
         <StatCard
-          title="Cost per 1 km"
-          sub={<span className="font-normal text-[#5B6475]">Last 8 months</span>}
+          title={t("costPerKm")}
+          sub={<span className="font-normal text-[#5B6475]">{t("last8Months")}</span>}
           // без витрат «₴ 0.00» вводить в оману — показуємо порожній стан
-          value={hasSpending && data.costPerKm != null ? formatMoney(data.costPerKm) : null}
+          value={hasSpending && data.costPerKm != null ? f.money(data.costPerKm) : null}
           chart={<SparklineBars values={data.costPerKmSeries} color="#8B5CF6" />}
-          chartLabel="Cost per kilometre by month over the last 8 months"
-          emptyHint="Add expenses and keep your mileage up to date"
-          emptyAction={{ href: "/expenses", label: "Open expenses" }}
+          chartLabel={t("costChart")}
+          emptyHint={t("costHint")}
+          emptyAction={{ href: "/expenses", label: t("openExpenses") }}
         />
       </div>
     </div>
@@ -91,35 +98,37 @@ export default async function DashboardPage() {
 }
 
 /** Зміна витрат до минулого місяця: зросли — червоним, зменшились — зеленим. */
-function SpendingChange({ percent }: { percent: number }) {
-  if (percent === 0) return <span className="text-[#5B6475]">Same as last month</span>
+async function SpendingChange({ percent }: { percent: number }) {
+  const t = await getTranslations("dashboard")
+  if (percent === 0) return <span className="text-[#5B6475]">{t("sameAsLastMonth")}</span>
   const up = percent > 0
   return (
     <span className={up ? "text-[#DC2626]" : "text-[#16A34A]"}>
       <span aria-hidden>{up ? "↑" : "↓"} </span>
       {up ? "+" : "−"}
-      {Math.abs(percent)}%<span className="sr-only"> vs last month</span>
+      {Math.abs(percent)}%<span className="sr-only"> {t("vsLastMonth")}</span>
     </span>
   )
 }
 
-function NoCars() {
+async function NoCars() {
+  const [t, tc] = await Promise.all([getTranslations("dashboard"), getTranslations("common")])
   return (
     <div className={`${dashboardCardClass} flex flex-col items-center px-6 py-16 text-center lg:py-20`}>
-      <h1 className="sr-only">Dashboard</h1>
+      <h1 className="sr-only">{t("title")}</h1>
       <span className="grid size-20 place-items-center rounded-full bg-[#E8F0FE] text-[#1766F2]">
         <Car className="size-9" strokeWidth={1.8} aria-hidden />
       </span>
-      <h2 className="mt-5 text-xl font-bold text-[#0B1220]">Add your first car</h2>
+      <h2 className="mt-5 text-xl font-bold text-[#0B1220]">{tc("addYourFirstCar")}</h2>
       <p className="mt-1.5 max-w-sm text-[15px] text-[#5B6475]">
-        Your dashboard will show mileage, upcoming maintenance and spending once you add a car
+        {t("noCarText")}
       </p>
       <Link
         href="/garage/new"
         className="mt-6 inline-flex h-12 items-center gap-2 rounded-[12px] bg-[#1766F2] px-6 text-base font-semibold text-white transition-colors outline-none hover:bg-[#0F55D6] focus-visible:ring-3 focus-visible:ring-[#1766F2]/40"
       >
         <Plus className="size-5" aria-hidden />
-        Add car
+        {tc("addCar")}
       </Link>
     </div>
   )

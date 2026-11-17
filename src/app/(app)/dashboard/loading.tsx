@@ -1,3 +1,4 @@
+import { useTranslations } from "next-intl"
 import { cn } from "cn"
 
 import { dashboardCardClass } from "@/components/dashboard/card-styles"
@@ -6,8 +7,9 @@ const bone = "animate-pulse rounded-[10px] bg-[#EEF1F6] motion-reduce:animate-no
 
 /** Скелетон дашборду поки вантажаться дані. */
 export default function DashboardLoading() {
+  const t = useTranslations("dashboard")
   return (
-    <div className="grid grid-cols-1 gap-4 lg:gap-6" aria-busy="true" aria-label="Loading dashboard">
+    <div className="grid grid-cols-1 gap-4 lg:gap-6" aria-busy="true" aria-label={t("loading")}>
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] lg:gap-6">
         <div className={cn(dashboardCardClass, "p-3 lg:p-5")}>
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] lg:gap-7">

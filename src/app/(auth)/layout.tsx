@@ -1,6 +1,8 @@
+import { getTranslations } from "next-intl/server"
 import Image from "next/image"
 import type { ReactNode } from "react"
 
+import { LocaleSwitch } from "@/components/auth/locale-switch"
 import { Logo } from "@/components/brand/logo"
 import authCar from "../../../public/auth-car.png"
 import authCarMobile from "../../../public/auth-car-mobile.png"
@@ -10,7 +12,8 @@ import authCarMobile from "../../../public/auth-car-mobile.png"
  * На мобільному заголовок сторінки стоїть над карткою, тому обгортка `children`
  * тут прозора, а «скляну» картку малюють самі форми (authCardClass).
  */
-export default function AuthLayout({ children }: { children: ReactNode }) {
+export default async function AuthLayout({ children }: { children: ReactNode }) {
+  const t = await getTranslations("auth")
   return (
     <div className="grid min-h-svh overflow-x-clip bg-linear-to-b from-[#F5F9FF] to-[#E4EDFC] lg:grid-cols-2 lg:overflow-x-visible lg:bg-none lg:bg-[#F5F7FB] xl:grid-cols-[11fr_9fr]">
       {/* Ліва панель (55% на xl) — лише на широких екранах. Фото заповнює
@@ -28,8 +31,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
         <div className="relative z-10 flex flex-col items-center px-10 pt-[10vh]">
           <Logo size="lg" />
           <p className="mt-10 text-center text-[32px] leading-[1.2] font-bold text-[#0B1220]">
-            Never miss
-            <br />a service again
+            {t.rich("tagline", { br: () => <br /> })}
           </p>
         </div>
       </aside>
@@ -40,6 +42,8 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
         <MobileWaves />
 
         <div className="relative z-10 w-full md:max-w-[480px] lg:flex lg:min-h-[calc(100svh-48px)] lg:max-w-none lg:items-center lg:self-stretch lg:rounded-[28px] lg:border lg:border-[rgba(15,23,42,0.04)] lg:bg-white lg:px-[clamp(32px,4vw,72px)] lg:py-12 lg:shadow-[0_10px_40px_rgba(15,23,42,0.08)] 2xl:min-h-[calc(100svh-64px)]">
+          {/* Перемикач мови — у правому верхньому куті картки (на мобільному — над заголовком) */}
+          <LocaleSwitch className="absolute top-0 right-0 z-20 lg:top-6 lg:right-6" />
           <div className="mx-auto w-full max-w-[560px]">{children}</div>
         </div>
 

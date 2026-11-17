@@ -1,7 +1,8 @@
 "use client"
 
 import { FileText, ImagePlus, Loader2, Trash2 } from "lucide-react"
-import { useId, useRef, useState, type DragEvent } from "react"
+import { useTranslations } from "next-intl"
+import { useId, useRef, useState, type DragEvent, type ReactNode } from "react"
 import { cn } from "cn"
 
 import { compressImage } from "@/lib/cars/compress-image"
@@ -19,11 +20,19 @@ export function ReceiptDropzone({
   value,
   onChange,
   disabled,
+  uploadLabel,
+  formatsLabel,
 }: {
   value: ReceiptValue | null
   onChange: (value: ReceiptValue | null) => void
   disabled?: boolean
+  /** Власні підписи зони (за замовчуванням — для чека) */
+  uploadLabel?: ReactNode
+  formatsLabel?: string
 }) {
+  const t = useTranslations("serviceLog.receipt")
+  const tg = useTranslations("garage")
+  const tc = useTranslations("common")
   const inputId = useId()
   const hintId = `${inputId}-hint`
   const inputRef = useRef<HTMLInputElement>(null)
@@ -39,8 +48,8 @@ export function ReceiptDropzone({
   const handleFile = async (file: File | undefined) => {
     if (!file) return
     setError(null)
-    if (!ACCEPT.includes(file.type)) return setError("Choose a JPG, PNG, WebP image or a PDF.")
-    if (file.size > MAX_BYTES) return setError("The file is larger than 10 MB.")
+    if (!ACCEPT.includes(file.type)) return setError(t("wrongType"))
+    if (file.size > MAX_BYTES) return setError(t("tooLarge"))
 
     if (file.type === "application/pdf") {
       set({ kind: "new", blob: file, extension: "pdf", contentType: file.type, name: file.name, isPdf: true, previewUrl: null })
@@ -59,7 +68,7 @@ export function ReceiptDropzone({
         previewUrl: URL.createObjectURL(blob),
       })
     } catch {
-      setError("Couldn't read this image. Try another file.")
+      setError(tg("photo.unreadable"))
     } finally {
       setProcessing(false)
     }
@@ -92,12 +101,12 @@ export function ReceiptDropzone({
           ) : (
             // blob: і signed URL — next/image тут не потрібен
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={previewUrl} alt="Receipt preview" className="size-full object-cover" />
+            <img src={previewUrl} alt={t("preview")} className="size-full object-cover" />
           )}
         </span>
         <div className="min-w-0 flex-1">
           <p className="truncate text-[15px] font-medium text-[#0B1220]">{name}</p>
-          <p className="text-[13px] text-[#5B6475]">{value.isPdf ? "PDF document" : "Receipt photo"}</p>
+          <p className="text-[13px] text-[#5B6475]">{value.isPdf ? t("pdf") : t("photo")}</p>
         </div>
         <div className="flex gap-2">
           <button
@@ -106,7 +115,7 @@ export function ReceiptDropzone({
             onClick={() => inputRef.current?.click()}
             className="h-10 rounded-[10px] border border-[#D9DEE7] bg-white px-4 text-[15px] font-semibold text-[#0B1220] outline-none hover:bg-[#F5F7FB] focus-visible:ring-3 focus-visible:ring-[#1766F2]/25 disabled:opacity-50"
           >
-            Replace
+            {tc("replace")}
           </button>
           <button
             type="button"
@@ -115,7 +124,7 @@ export function ReceiptDropzone({
             className="inline-flex h-10 items-center gap-2 rounded-[10px] border border-destructive/25 bg-white px-4 text-[15px] font-semibold text-destructive outline-none hover:bg-destructive/5 focus-visible:ring-3 focus-visible:ring-destructive/25 disabled:opacity-50"
           >
             <Trash2 className="size-4" aria-hidden />
-            Remove
+            {tc("remove")}
           </button>
         </div>
         {hiddenInput}
@@ -152,12 +161,12 @@ export function ReceiptDropzone({
           <ImagePlus className="size-6 text-[#5B6475]" strokeWidth={1.8} aria-hidden />
         )}
         <span className="text-[15px] text-[#5B6475]">
-          {processing ? "Optimizing photo…" : (
-            <>Upload receipt photo or <span className="font-semibold text-[#1766F2]">choose file</span></>
-          )}
+          {processing
+            ? tc("optimizingPhoto")
+            : (uploadLabel ?? t.rich("upload", { link: (chunks) => <span className="font-semibold text-[#1766F2]">{chunks}</span> }))}
         </span>
         <span id={hintId} className="text-[13px] text-[#8A93A3]">
-          JPG, PNG, WebP or PDF, up to 10 MB
+          {formatsLabel ?? t("formats")}
         </span>
         {hiddenInput}
       </label>

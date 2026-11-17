@@ -23,13 +23,13 @@ export async function saveFuelRecord({
   data: FuelRecordInput
 }): Promise<MutationResult> {
   if (!idSchema.safeParse(carId).success || (id && !idSchema.safeParse(id).success)) {
-    return { ok: false, message: "Invalid request." }
+    return { ok: false, message: "errors.invalidRequest" }
   }
   const parsed = fuelRecordSchema.safeParse(data)
   if (!parsed.success) {
     return {
       ok: false,
-      message: "Please check the highlighted fields.",
+      message: "errors.checkFields",
       fieldErrors: z.flattenError(parsed.error).fieldErrors,
     }
   }
@@ -46,7 +46,7 @@ export async function saveFuelRecord({
       .single()
     if (error || !created) {
       console.error("saveFuelRecord insert:", error)
-      return { ok: false, message: "Couldn't save the refueling. Please try again." }
+      return { ok: false, message: "errors.saveRefuelingFailed" }
     }
     revalidatePath("/", "layout")
     return { ok: true, id: created.id }
@@ -57,12 +57,12 @@ export async function saveFuelRecord({
     .select("id, car_id, filled_at, mileage")
     .eq("id", id)
     .maybeSingle()
-  if (!existing || existing.car_id !== carId) return { ok: false, message: "This refueling doesn't exist or was deleted." }
+  if (!existing || existing.car_id !== carId) return { ok: false, message: "errors.refuelingNotFound" }
 
   const { error } = await supabase.from("fuel_records").update(parsed.data).eq("id", id)
   if (error) {
     console.error("saveFuelRecord update:", error)
-    return { ok: false, message: "Couldn't save the changes. Please try again." }
+    return { ok: false, message: "errors.saveChangesFailed" }
   }
   await syncMileageEntry(supabase, {
     carId,
@@ -78,7 +78,7 @@ export async function saveFuelRecord({
 
 /** Видаляє заправку і її точку пробігу. */
 export async function deleteFuelRecord(id: string): Promise<MutationResult> {
-  if (!idSchema.safeParse(id).success) return { ok: false, message: "Invalid request." }
+  if (!idSchema.safeParse(id).success) return { ok: false, message: "errors.invalidRequest" }
   const { supabase, userId } = await getActionContext()
   if (!userId) return NOT_SIGNED_IN
 
@@ -87,7 +87,7 @@ export async function deleteFuelRecord(id: string): Promise<MutationResult> {
     .select("id, car_id, filled_at, mileage")
     .eq("id", id)
     .maybeSingle()
-  if (!record) return { ok: false, message: "This refueling doesn't exist or was deleted." }
+  if (!record) return { ok: false, message: "errors.refuelingNotFound" }
 
   await deleteMileageEntry(supabase, {
     carId: record.car_id,
@@ -98,7 +98,7 @@ export async function deleteFuelRecord(id: string): Promise<MutationResult> {
   const { error } = await supabase.from("fuel_records").delete().eq("id", id)
   if (error) {
     console.error("deleteFuelRecord:", error)
-    return { ok: false, message: "Couldn't delete the refueling. Please try again." }
+    return { ok: false, message: "errors.deleteRefuelingFailed" }
   }
   revalidatePath("/", "layout")
   return { ok: true }

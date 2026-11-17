@@ -1,17 +1,18 @@
+import { useTranslations } from "next-intl"
 import Link from "next/link"
 
 import { deleteServiceRecord } from "@/app/(app)/service-log/actions"
 import { cardClass } from "@/components/common/buttons"
 import { RowActions } from "@/components/common/row-actions"
 import { WorkTypeIcon } from "@/components/maintenance/work-type-icon"
-import { formatDate } from "@/lib/dates"
-import { formatKm, formatMoney, formatMoneyShort } from "@/lib/format"
+import type { Formatter } from "@/lib/format"
 import type { ServiceRow } from "@/lib/service-log/queries"
 import { ExpandableComment } from "./expandable-comment"
 import { ReceiptLink } from "./receipt-link"
 
 /** «Oil change +2» — перша робота і кількість решти. */
 function WorkTypes({ works, title }: { works: ServiceRow["works"]; title?: string | null }) {
+  const t = useTranslations("serviceLog")
   const [first, ...rest] = works
   if (!first) {
     return title ? (
@@ -30,23 +31,24 @@ function WorkTypes({ works, title }: { works: ServiceRow["works"]; title?: strin
       {rest.length > 0 && (
         <span className="shrink-0 rounded-full bg-[#EEF3FE] px-2 py-0.5 text-xs font-semibold text-[#1766F2]">
           +{rest.length}
-          <span className="sr-only"> more: {rest.map((w) => w.name).join(", ")}</span>
+          <span className="sr-only"> {t("more", { names: rest.map((w) => w.name).join(", ") })}</span>
         </span>
       )}
     </span>
   )
 }
 
-function Actions({ row, className }: { row: ServiceRow; className?: string }) {
-  const date = formatDate(row.performed_at)
+function Actions({ row, f, className }: { row: ServiceRow; f: Formatter; className?: string }) {
+  const t = useTranslations("serviceLog")
+  const date = f.date(row.performed_at)
   return (
     <RowActions
-      label={`Actions for service on ${date}`}
+      label={t("actionsFor", { date })}
       editHref={`/service-log/${row.id}/edit`}
       onDelete={deleteServiceRecord.bind(null, row.id)}
-      deleteTitle={`Delete service record from ${date}?`}
-      deleteDescription="The record, its receipt and its mileage reading will be permanently deleted."
-      deletedMessage="Service record deleted"
+      deleteTitle={t("deleteTitle", { date })}
+      deleteDescription={t("deleteText")}
+      deletedMessage={t("deleted")}
       className={className}
     />
   )
@@ -56,15 +58,16 @@ function Actions({ row, className }: { row: ServiceRow; className?: string }) {
  * Мобільна картка запису (< lg). Уся картка веде на редагування (посилання-підкладка),
  * а ⋮, мініатюра чека й «Show more» лежать над нею і клікаються окремо.
  */
-function ServiceRecordCard({ row: r }: { row: ServiceRow }) {
+function ServiceRecordCard({ row: r, f }: { row: ServiceRow; f: Formatter }) {
+  const t = useTranslations("serviceLog")
   const [first, ...rest] = r.works
-  const name = first?.name ?? r.title ?? "Service"
-  const date = formatDate(r.performed_at)
+  const name = first?.name ?? r.title ?? t("service")
+  const date = f.date(r.performed_at)
   return (
     <li className="relative rounded-[18px] border border-[rgba(15,23,42,0.04)] bg-white p-4 shadow-[0_10px_40px_rgba(15,23,42,0.08)]">
       <Link
         href={`/service-log/${r.id}/edit`}
-        aria-label={`Edit ${name} service from ${date}`}
+        aria-label={t("editLabel", { name, date })}
         className="absolute inset-0 rounded-[18px] outline-none focus-visible:ring-3 focus-visible:ring-[#1766F2]/40"
       />
       <div className="pointer-events-none relative grid grid-cols-1 gap-2.5">
@@ -79,15 +82,15 @@ function ServiceRecordCard({ row: r }: { row: ServiceRow }) {
                 title={rest.map((w) => w.name).join(", ")}
               >
                 +{rest.length}
-                <span className="sr-only"> more: {rest.map((w) => w.name).join(", ")}</span>
+                <span className="sr-only"> {t("more", { names: rest.map((w) => w.name).join(", ") })}</span>
               </span>
             )}
           </div>
           <p className="shrink-0 pt-2 text-base leading-tight font-extrabold whitespace-nowrap text-[#0B1220]">
-            {formatMoneyShort(r.total_cost)}
+            {f.moneyShort(r.total_cost)}
           </p>
           <div className="pointer-events-auto relative z-10 -mt-1.5 -mr-2.5">
-            <Actions row={r} className="size-11" />
+            <Actions row={r} f={f} className="size-11" />
           </div>
         </div>
 
@@ -95,7 +98,7 @@ function ServiceRecordCard({ row: r }: { row: ServiceRow }) {
         <p className="flex flex-wrap gap-x-1.5 text-[13px] break-words text-[#5B6475]">
           <span>{date}</span>
           <span aria-hidden>·</span>
-          <span className="whitespace-nowrap">{formatKm(r.mileage)}</span>
+          <span className="whitespace-nowrap">{f.km(r.mileage)}</span>
           {r.service_station && (
             <>
               <span aria-hidden>·</span>
@@ -106,7 +109,7 @@ function ServiceRecordCard({ row: r }: { row: ServiceRow }) {
 
         {/* Рядок 3: роботи і запчастини */}
         <p className="text-[13px] text-[#0B1220]">
-          Labor {formatMoneyShort(r.labor_cost)} · Parts {formatMoneyShort(r.parts_cost)}
+          {t("laborParts", { labor: f.moneyShort(r.labor_cost), parts: f.moneyShort(r.parts_cost) })}
         </p>
 
         {/* Коментар і чек */}
@@ -134,7 +137,9 @@ const th = "px-3 py-3 text-left text-[13px] font-semibold text-[#5B6475] first:p
 const td = "px-3 py-3.5 align-middle first:pl-6 last:pr-4"
 
 /** Журнал ТО: таблиця на десктопі, картки на мобільному. */
-export function ServiceRecordsList({ rows }: { rows: ServiceRow[] }) {
+export function ServiceRecordsList({ rows, f }: { rows: ServiceRow[]; f: Formatter }) {
+  const t = useTranslations("serviceLog.col")
+  const tc = useTranslations("common")
   return (
     <>
       {/* Десктоп */}
@@ -142,28 +147,28 @@ export function ServiceRecordsList({ rows }: { rows: ServiceRow[] }) {
         <table className="w-full min-w-[960px] text-[15px] text-[#0B1220]">
           <thead className="border-b border-[#E5E9F0]">
             <tr>
-              <th scope="col" className={th}>Date</th>
-              <th scope="col" className={th}>Mileage</th>
-              <th scope="col" className={th}>Work type</th>
-              <th scope="col" className={th}>Service station</th>
-              <th scope="col" className={`${th} text-right`}>Labor</th>
-              <th scope="col" className={`${th} text-right`}>Parts</th>
-              <th scope="col" className={`${th} text-right`}>Total</th>
-              <th scope="col" className={th}>Receipt</th>
-              <th scope="col" className={th}>Comment</th>
-              <th scope="col" className={th}><span className="sr-only">Actions</span></th>
+              <th scope="col" className={th}>{t("date")}</th>
+              <th scope="col" className={th}>{t("mileage")}</th>
+              <th scope="col" className={th}>{t("workType")}</th>
+              <th scope="col" className={th}>{t("station")}</th>
+              <th scope="col" className={`${th} text-right`}>{t("labor")}</th>
+              <th scope="col" className={`${th} text-right`}>{t("parts")}</th>
+              <th scope="col" className={`${th} text-right`}>{t("total")}</th>
+              <th scope="col" className={th}>{t("receipt")}</th>
+              <th scope="col" className={th}>{t("comment")}</th>
+              <th scope="col" className={th}><span className="sr-only">{tc("actions")}</span></th>
             </tr>
           </thead>
           <tbody className="divide-y divide-[#EEF1F6]">
             {rows.map((r) => (
               <tr key={r.id} className="hover:bg-[#FAFBFD]">
-                <td className={`${td} whitespace-nowrap`}>{formatDate(r.performed_at)}</td>
-                <td className={`${td} whitespace-nowrap`}>{formatKm(r.mileage)}</td>
+                <td className={`${td} whitespace-nowrap`}>{f.date(r.performed_at)}</td>
+                <td className={`${td} whitespace-nowrap`}>{f.km(r.mileage)}</td>
                 <td className={`${td} max-w-[240px]`}><WorkTypes works={r.works} title={r.title} /></td>
                 <td className={td}><div className="max-w-[180px] truncate" title={r.service_station ?? undefined}>{r.service_station ?? <span className="text-[#8A93A3]">—</span>}</div></td>
-                <td className={`${td} text-right whitespace-nowrap`}>{formatMoney(r.labor_cost)}</td>
-                <td className={`${td} text-right whitespace-nowrap`}>{formatMoney(r.parts_cost)}</td>
-                <td className={`${td} text-right font-semibold whitespace-nowrap`}>{formatMoney(r.total_cost)}</td>
+                <td className={`${td} text-right whitespace-nowrap`}>{f.money(r.labor_cost)}</td>
+                <td className={`${td} text-right whitespace-nowrap`}>{f.money(r.parts_cost)}</td>
+                <td className={`${td} text-right font-semibold whitespace-nowrap`}>{f.money(r.total_cost)}</td>
                 <td className={td}><ReceiptLink path={r.receipt_path} url={r.receiptUrl} /></td>
                 <td className={`${td} text-[#5B6475]`}>
                   {/* truncate на <td> не обмежує ширину таблиці — обрізаємо внутрішній блок */}
@@ -171,7 +176,7 @@ export function ServiceRecordsList({ rows }: { rows: ServiceRow[] }) {
                     {r.comment ?? "—"}
                   </div>
                 </td>
-                <td className={`${td} w-12`}><Actions row={r} /></td>
+                <td className={`${td} w-12`}><Actions row={r} f={f} /></td>
               </tr>
             ))}
           </tbody>
@@ -181,7 +186,7 @@ export function ServiceRecordsList({ rows }: { rows: ServiceRow[] }) {
       {/* Мобільний */}
       <ul className="grid grid-cols-1 gap-3 lg:hidden">
         {rows.map((r) => (
-          <ServiceRecordCard key={r.id} row={r} />
+          <ServiceRecordCard key={r.id} row={r} f={f} />
         ))}
       </ul>
     </>

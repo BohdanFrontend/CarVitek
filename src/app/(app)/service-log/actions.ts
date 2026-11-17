@@ -31,13 +31,13 @@ type SaveInput = {
  */
 export async function saveServiceRecord({ id, carId, data, receiptPath }: SaveInput): Promise<MutationResult> {
   if (!idSchema.safeParse(carId).success || (id && !idSchema.safeParse(id).success)) {
-    return { ok: false, message: "Invalid request." }
+    return { ok: false, message: "errors.invalidRequest" }
   }
   const parsed = serviceRecordSchema.safeParse(data)
   if (!parsed.success) {
     return {
       ok: false,
-      message: "Please check the highlighted fields.",
+      message: "errors.checkFields",
       fieldErrors: z.flattenError(parsed.error).fieldErrors,
     }
   }
@@ -47,13 +47,13 @@ export async function saveServiceRecord({ id, carId, data, receiptPath }: SaveIn
   if (!userId) return NOT_SIGNED_IN
   if (!car) return CAR_NOT_FOUND
   if (receiptPath && !isOwnedPath(receiptPath, userId, carId)) {
-    return { ok: false, message: "Invalid receipt file." }
+    return { ok: false, message: "errors.invalidReceipt" }
   }
 
   // Усі роботи мають бути видимі користувачу (системні або власні)
   const { data: types } = await supabase.from("maintenance_types").select("id").in("id", type_ids)
   if ((types?.length ?? 0) !== new Set(type_ids).size) {
-    return { ok: false, message: "Some work types are not available.", fieldErrors: { type_ids: ["Select work types from the list"] } }
+    return { ok: false, message: "errors.workTypesUnavailable", fieldErrors: { type_ids: ["validation.invalidWorkType"] } }
   }
 
   // ---------------------------------------------------------------- новий запис
@@ -65,7 +65,7 @@ export async function saveServiceRecord({ id, carId, data, receiptPath }: SaveIn
       .single()
     if (error || !created) {
       console.error("saveServiceRecord insert:", error)
-      return { ok: false, message: "Couldn't save the record. Please try again." }
+      return { ok: false, message: "errors.saveRecordFailed" }
     }
     const { error: itemsError } = await supabase
       .from("service_record_items")
@@ -73,7 +73,7 @@ export async function saveServiceRecord({ id, carId, data, receiptPath }: SaveIn
     if (itemsError) {
       console.error("saveServiceRecord items:", itemsError)
       await deleteRecordWithMileage(supabase, { id: created.id, car_id: carId, performed_at: fields.performed_at, mileage: fields.mileage })
-      return { ok: false, message: "Couldn't save the record. Please try again." }
+      return { ok: false, message: "errors.saveRecordFailed" }
     }
     revalidatePath("/", "layout")
     return { ok: true, id: created.id }
@@ -85,7 +85,7 @@ export async function saveServiceRecord({ id, carId, data, receiptPath }: SaveIn
     .select("id, car_id, performed_at, mileage, receipt_path, service_record_items(maintenance_type_id)")
     .eq("id", id)
     .maybeSingle()
-  if (!existing || existing.car_id !== carId) return { ok: false, message: "This record doesn't exist or was deleted." }
+  if (!existing || existing.car_id !== carId) return { ok: false, message: "errors.recordNotFound" }
 
   const { error: updateError } = await supabase
     .from("service_records")
@@ -93,7 +93,7 @@ export async function saveServiceRecord({ id, carId, data, receiptPath }: SaveIn
     .eq("id", id)
   if (updateError) {
     console.error("saveServiceRecord update:", updateError)
-    return { ok: false, message: "Couldn't save the changes. Please try again." }
+    return { ok: false, message: "errors.saveChangesFailed" }
   }
 
   // Роботи: видаляємо зайві, додаємо нові
@@ -129,7 +129,7 @@ export async function saveServiceRecord({ id, carId, data, receiptPath }: SaveIn
 
 /** Видаляє запис ТО, його точку пробігу і чек. */
 export async function deleteServiceRecord(id: string): Promise<MutationResult> {
-  if (!idSchema.safeParse(id).success) return { ok: false, message: "Invalid request." }
+  if (!idSchema.safeParse(id).success) return { ok: false, message: "errors.invalidRequest" }
   const { supabase, userId } = await getActionContext()
   if (!userId) return NOT_SIGNED_IN
 
@@ -138,10 +138,10 @@ export async function deleteServiceRecord(id: string): Promise<MutationResult> {
     .select("id, car_id, performed_at, mileage, receipt_path")
     .eq("id", id)
     .maybeSingle()
-  if (!record) return { ok: false, message: "This record doesn't exist or was deleted." }
+  if (!record) return { ok: false, message: "errors.recordNotFound" }
 
   const ok = await deleteRecordWithMileage(supabase, record)
-  if (!ok) return { ok: false, message: "Couldn't delete the record. Please try again." }
+  if (!ok) return { ok: false, message: "errors.deleteRecordFailed" }
   if (record.receipt_path) await supabase.storage.from(RECEIPTS).remove([record.receipt_path])
 
   revalidatePath("/", "layout")

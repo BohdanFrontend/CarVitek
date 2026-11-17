@@ -1,6 +1,7 @@
 "use client"
 
 import { ImagePlus, Loader2, Trash2 } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { useId, useRef, useState, type DragEvent } from "react"
 import { cn } from "cn"
 
@@ -23,6 +24,8 @@ type PhotoDropzoneProps = {
 }
 
 export function PhotoDropzone({ value, onChange, disabled }: PhotoDropzoneProps) {
+  const t = useTranslations("garage")
+  const tc = useTranslations("common")
   const inputId = useId()
   const hintId = `${inputId}-hint`
   const inputRef = useRef<HTMLInputElement>(null)
@@ -40,11 +43,11 @@ export function PhotoDropzone({ value, onChange, disabled }: PhotoDropzoneProps)
     if (!file) return
     setError(null)
     if (!(PHOTO_ACCEPT as readonly string[]).includes(file.type)) {
-      setError("Choose a JPG, PNG or WebP image.")
+      setError(t("photo.wrongType"))
       return
     }
     if (file.size > PHOTO_MAX_BYTES) {
-      setError("The image is larger than 10 MB.")
+      setError(t("photo.tooLarge"))
       return
     }
     setProcessing(true)
@@ -52,7 +55,7 @@ export function PhotoDropzone({ value, onChange, disabled }: PhotoDropzoneProps)
       const compressed = await compressImage(file)
       setPhoto({ kind: "new", ...compressed, url: URL.createObjectURL(compressed.blob) })
     } catch {
-      setError("Couldn't read this image. Try another file.")
+      setError(t("photo.unreadable"))
     } finally {
       setProcessing(false)
     }
@@ -86,7 +89,7 @@ export function PhotoDropzone({ value, onChange, disabled }: PhotoDropzoneProps)
         <div className="relative aspect-[16/10] max-h-80 overflow-hidden rounded-[14px] border border-[#D9DEE7] bg-[#EAF1FE] sm:max-w-md">
           {/* blob: і signed URL — next/image тут не потрібен */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={value.url} alt="Car photo preview" className="size-full object-cover" />
+          <img src={value.url} alt={t("form.photoPreview")} className="size-full object-cover" />
         </div>
         <div className="flex gap-2">
           <button
@@ -95,7 +98,7 @@ export function PhotoDropzone({ value, onChange, disabled }: PhotoDropzoneProps)
             onClick={() => inputRef.current?.click()}
             className="h-10 rounded-[10px] border border-[#D9DEE7] bg-white px-4 text-[15px] font-semibold text-[#0B1220] outline-none hover:bg-[#F5F7FB] focus-visible:ring-3 focus-visible:ring-[#1766F2]/25 disabled:opacity-50"
           >
-            Replace
+            {tc("replace")}
           </button>
           <button
             type="button"
@@ -104,7 +107,7 @@ export function PhotoDropzone({ value, onChange, disabled }: PhotoDropzoneProps)
             className="inline-flex h-10 items-center gap-2 rounded-[10px] border border-destructive/25 bg-white px-4 text-[15px] font-semibold text-destructive outline-none hover:bg-destructive/5 focus-visible:ring-3 focus-visible:ring-destructive/25 disabled:opacity-50"
           >
             <Trash2 className="size-4" aria-hidden />
-            Remove
+            {tc("remove")}
           </button>
         </div>
         {hiddenInput}
@@ -136,15 +139,15 @@ export function PhotoDropzone({ value, onChange, disabled }: PhotoDropzoneProps)
         )}
         <span className="text-[15px] text-[#5B6475]">
           {processing ? (
-            "Optimizing photo…"
+            tc("optimizingPhoto")
           ) : (
-            <>
-              Drag &amp; drop or <span className="font-semibold text-[#1766F2]">choose file</span>
-            </>
+            tc.rich("dragOrChoose", {
+              link: (chunks) => <span className="font-semibold text-[#1766F2]">{chunks}</span>,
+            })
           )}
         </span>
         <span id={hintId} className="text-[13px] text-[#8A93A3]">
-          JPG, PNG or WebP, up to 10 MB
+          {tc("imageFormats")}
         </span>
         {hiddenInput}
       </label>

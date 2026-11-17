@@ -7,7 +7,7 @@ import { Sidebar } from "@/components/app-shell/sidebar"
 import { Topbar } from "@/components/app-shell/topbar"
 import { Toaster } from "@/components/ui/sonner"
 import { getActiveCar } from "@/lib/cars/active-car"
-import { getAttentionCount } from "@/lib/dashboard/get-dashboard-data"
+import { getBellItems } from "@/lib/notifications"
 import { createClient } from "@/lib/supabase/server"
 
 export const viewport: Viewport = { themeColor: "#FFFFFF" }
@@ -29,7 +29,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
   const { cars, activeCar } = await getActiveCar()
   const switcherCars = cars.map(({ id, make, model, year }) => ({ id, make, model, year }))
   // План ТО кешується в межах запиту — дашборд не рахує його вдруге
-  const alertCount = activeCar ? await getAttentionCount(activeCar.id) : 0
+  const alerts = activeCar ? await getBellItems(activeCar.id) : []
 
   return (
     <div className="flex w-full flex-1 bg-[#F5F7FB]">
@@ -40,7 +40,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
           user={user}
           cars={switcherCars}
           activeCarId={activeCar?.id ?? null}
-          alertCount={alertCount}
+          alerts={alerts}
         />
         {/* Нижній відступ на мобільному — під таб-панель (64px + safe area + 16px).
             max-lg:overflow-x-clip — лише страховка на мобільному від переповнення (не створює скрол-контейнер, sticky працює) */}

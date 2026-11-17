@@ -1,4 +1,9 @@
+import { createTranslator } from "next-intl"
 import { describe, expect, it } from "vitest"
+
+import en from "@/i18n/messages/en.json"
+import uk from "@/i18n/messages/uk.json"
+import { createFormatter } from "@/lib/format"
 
 import { describeDue, describeInterval, describeNext } from "./describe"
 import {
@@ -11,6 +16,11 @@ import {
 } from "./plan"
 
 const TODAY = "2026-11-11"
+
+const tEn = createTranslator({ locale: "en", messages: en, namespace: "planner" })
+const tUk = createTranslator({ locale: "uk", messages: uk, namespace: "planner" })
+const fEn = createFormatter({ locale: "en", currency: "UAH" })
+const fUk = createFormatter({ locale: "uk", currency: "UAH" })
 
 const item = (over: Partial<MaintenanceItem>): MaintenanceItem => ({
   typeId: "t",
@@ -87,16 +97,20 @@ describe("averageKmPerDayDetailed", () => {
   })
 })
 
-describe("тексти плану", () => {
+describe("тексти плану (обидві мови)", () => {
   it("еталонний приклад: «in 2 000 km (~40 days)», «Next: 95 000 km or 10 May 2027»", () => {
     const oil = item({})
-    expect(describeDue(oil, TODAY)).toBe("in 2 000 km (~40 days)")
-    expect(describeNext(oil)).toBe("95 000 km or 10 May 2027")
+    expect(describeDue(oil, TODAY, tEn, fEn)).toBe("in 2 000 km (~40 days)")
+    expect(describeNext(oil, tEn, fEn)).toBe("95 000 km or 10 May 2027")
+    expect(describeDue(oil, TODAY, tUk, fUk)).toBe("через 2 000 км (~40 днів)")
+    expect(describeNext(oil, tUk, fUk)).toBe("95 000 км або 10 трав. 2027")
   })
   it("перепробіг і інтервали", () => {
-    expect(describeDue(item({ last: { date: "2026-05-10", mileage: 80_000 } }), TODAY)).toBe("3 000 km overdue")
-    expect(describeInterval(10_000, 12)).toBe("10 000 km / 12 months")
-    expect(describeInterval(30_000, null)).toBe("30 000 km")
-    expect(describeInterval(null, 6)).toBe("Every 6 months")
+    expect(describeDue(item({ last: { date: "2026-05-10", mileage: 80_000 } }), TODAY, tEn, fEn)).toBe("3 000 km overdue")
+    expect(describeInterval(10_000, 12, tEn, fEn)).toBe("10 000 km / 12 months")
+    expect(describeInterval(30_000, null, tEn, fEn)).toBe("30 000 km")
+    expect(describeInterval(null, 6, tEn, fEn)).toBe("Every 6 months")
+    expect(describeInterval(null, 6, tUk, fUk)).toBe("Кожні 6 місяців")
+    expect(describeInterval(10_000, 12, tUk, fUk)).toBe("10 000 км / 12 місяців")
   })
 })

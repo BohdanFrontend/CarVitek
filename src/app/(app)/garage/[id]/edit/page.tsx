@@ -1,4 +1,5 @@
 import type { Metadata } from "next"
+import { getTranslations } from "next-intl/server"
 import { notFound, redirect } from "next/navigation"
 import { z } from "zod"
 
@@ -7,7 +8,9 @@ import { CarForm } from "@/components/cars/car-form"
 import { getCarPhotoUrls } from "@/lib/cars/photos"
 import { createClient } from "@/lib/supabase/server"
 
-export const metadata: Metadata = { title: "Edit car" }
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: (await getTranslations("garage.form"))("editTitle") }
+}
 
 export default async function EditCarPage({ params }: PageProps<"/garage/[id]/edit">) {
   const { id } = await params

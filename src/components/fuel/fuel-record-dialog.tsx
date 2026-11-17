@@ -1,6 +1,7 @@
 "use client"
 
 import { CalendarDays, Droplets, Gauge, Loader2, Store, Tag, TriangleAlert, Wallet, Zap } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { useId, useState, useTransition, type FormEvent } from "react"
 import { toast } from "sonner"
 import { cn } from "cn"
@@ -17,7 +18,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { todayInKyiv } from "@/lib/dates"
-import { formatKm } from "@/lib/format"
+import { useFormat } from "@/i18n/format-client"
+import { useMessageText } from "@/i18n/use-message"
 import {
   decimalFromString,
   fuelRecordSchema,
@@ -60,6 +62,10 @@ export function FuelRecordDialog({
 }) {
   const ids = useId()
   const fid = (n: string) => `${ids}-${n}`
+  const t = useTranslations("fuel.form")
+  const tc = useTranslations("common")
+  const f = useFormat()
+  const text = useMessageText()
   const today = todayInKyiv()
   const electric = unit === "kWh"
 
@@ -123,15 +129,14 @@ export function FuelRecordDialog({
       })
       if (!res.ok) {
         setErrors(Object.fromEntries(Object.entries(res.fieldErrors ?? {}).map(([k, v]) => [k, v?.[0] ?? ""])))
-        toast.error(res.message)
+        toast.error(text(res.message))
         return
       }
-      toast.success(record ? "Changes saved" : electric ? "Charging added" : "Refueling added")
+      toast.success(record ? tc("changesSaved") : electric ? t("addedElectric") : t("added"))
       onOpenChange(false)
     })
   }
 
-  const what = electric ? "charging" : "refueling"
   const unitInput = (id: string, value: string, onChange: (v: string) => void, suffix: string, error?: string, placeholder?: string) => (
     <div className="relative">
       <input
@@ -157,15 +162,15 @@ export function FuelRecordDialog({
         <form onSubmit={submit} noValidate className="grid grid-cols-1 gap-4">
           <DialogHeader>
             <DialogTitle className="text-lg font-bold text-[#0B1220]">
-              {record ? `Edit ${what}` : `Add ${what}`}
+              {record ? t(electric ? "editTitleElectric" : "editTitle") : t(electric ? "addTitleElectric" : "addTitle")}
             </DialogTitle>
             <DialogDescription className="text-[15px] text-[#5B6475]">
-              Enter the price or the total — the other one is calculated.
+              {t("description")}
             </DialogDescription>
           </DialogHeader>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <Field id={fid("date")} label="Date" icon={CalendarDays} error={errors.filled_at}>
+            <Field id={fid("date")} label={t("date")} icon={CalendarDays} error={errors.filled_at}>
               <input
                 id={fid("date")}
                 type="date"
@@ -179,14 +184,14 @@ export function FuelRecordDialog({
             </Field>
             <Field
               id={fid("mileage")}
-              label="Mileage"
+              label={t("mileage")}
               icon={Gauge}
               error={errors.mileage}
               hint={
                 lowerThanPrevious ? (
                   <span className="inline-flex items-start gap-1.5 text-[#B45309]">
                     <TriangleAlert className="mt-0.5 size-3.5 shrink-0" aria-hidden />
-                    Lower than the previous {what} ({formatKm(previous!)}). Check the value.
+                    {t(electric ? "lowerMileageElectric" : "lowerMileage", { km: f.km(previous!) })}
                   </span>
                 ) : undefined
               }
@@ -203,26 +208,26 @@ export function FuelRecordDialog({
                   {...fieldA11y(fid("mileage"), errors.mileage, lowerThanPrevious)}
                 />
                 <span className="pointer-events-none absolute top-1/2 right-4 -translate-y-1/2 text-[15px] font-medium text-[#5B6475]">
-                  km
+                  {f.units.km}
                 </span>
               </div>
             </Field>
 
-            <Field id={fid("amount")} label={electric ? "Energy" : "Liters"} icon={electric ? Zap : Droplets} error={errors.liters}>
-              {unitInput(fid("amount"), amount, onAmount, unit, errors.liters, electric ? "e.g. 42.5" : "e.g. 45.2")}
+            <Field id={fid("amount")} label={electric ? t("energy") : t("liters")} icon={electric ? Zap : Droplets} error={errors.liters}>
+              {unitInput(fid("amount"), amount, onAmount, f.units[unit], errors.liters, electric ? t("amountPlaceholderElectric") : t("amountPlaceholder"))}
             </Field>
-            <Field id={fid("price")} label={`Price per ${electric ? "kWh" : "liter"}`} icon={Tag} error={errors.price_per_liter}>
-              {unitInput(fid("price"), price, onPrice, `₴/${unit}`, errors.price_per_liter, "e.g. 57.90")}
+            <Field id={fid("price")} label={electric ? t("pricePerKwh") : t("pricePerLiter")} icon={Tag} error={errors.price_per_liter}>
+              {unitInput(fid("price"), price, onPrice, `${f.inputSymbol}/${f.units[unit]}`, errors.price_per_liter, t("pricePlaceholder"))}
             </Field>
-            <Field id={fid("total")} label="Total" icon={Wallet} hint="Calculated from the price, or enter it to calculate the price">
-              {unitInput(fid("total"), total, onTotal, "₴", undefined, "0.00")}
+            <Field id={fid("total")} label={t("total")} icon={Wallet} hint={t("totalHint")}>
+              {unitInput(fid("total"), total, onTotal, f.inputSymbol, undefined, "0.00")}
             </Field>
-            <Field id={fid("station")} label="Station" icon={Store} optional error={errors.station}>
+            <Field id={fid("station")} label={t("station")} icon={Store} optional error={errors.station}>
               <input
                 id={fid("station")}
                 value={station}
                 onChange={(e) => setStation(e.target.value)}
-                placeholder="e.g. OKKO"
+                placeholder={t("stationPlaceholder")}
                 autoComplete="off"
                 disabled={pending}
                 className={inputClass}
@@ -239,14 +244,14 @@ export function FuelRecordDialog({
               disabled={pending}
               className="size-5 rounded accent-[#1766F2]"
             />
-            {electric ? "Charged to full" : "Full tank"}
-            <span className="font-normal text-[#5B6475]">— needed to calculate consumption</span>
+            {electric ? t("fullCharge") : t("fullTank")}
+            <span className="font-normal text-[#5B6475]">{t("fullHint")}</span>
           </label>
 
           <DialogFooter>
             <button type="submit" disabled={pending} className={cn(primaryButtonClass, "w-full sm:w-auto")}>
               {pending && <Loader2 className="size-4 animate-spin" aria-hidden />}
-              Save
+              {tc("save")}
             </button>
           </DialogFooter>
         </form>

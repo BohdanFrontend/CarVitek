@@ -1,8 +1,9 @@
 import type { Metadata } from "next"
+import { getTranslations } from "next-intl/server"
 import Link from "next/link"
 import { cn } from "cn"
 
-import { NoCarState } from "@/components/common/empty-state"
+import { NoCarState } from "@/components/common/no-car-state"
 import { LoadMore, parseLimit } from "@/components/common/load-more"
 import { PageHeader } from "@/components/common/page-header"
 import { ExpenseRecords } from "@/components/expenses/expense-records"
@@ -13,7 +14,9 @@ import { todayInKyiv } from "@/lib/dates"
 import { getExpenseOverview, listExpenses } from "@/lib/expenses/queries"
 import type { Period } from "@/lib/stats/costs"
 
-export const metadata: Metadata = { title: "Expenses" }
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: (await getTranslations("expenses"))("title") }
+}
 
 const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v)
 
@@ -32,7 +35,8 @@ function parsePeriod(sp: Record<string, string | string[] | undefined>, today: s
 export default async function ExpensesPage({ searchParams }: PageProps<"/expenses">) {
   const sp = await searchParams
   const { activeCar } = await getActiveCar()
-  if (!activeCar) return <NoCarState title="Expenses" what="expenses" />
+  const t = await getTranslations("expenses")
+  if (!activeCar) return <NoCarState title={t("title")} what={t("noCarWhat")} />
 
   const tab = one(sp.tab) === "records" ? "records" : "overview"
   const today = todayInKyiv()
@@ -45,13 +49,13 @@ export default async function ExpensesPage({ searchParams }: PageProps<"/expense
 
   return (
     <div>
-      <PageHeader title="Expenses" description={carLabel(activeCar)} />
-      <nav aria-label="Expenses sections" className="mb-5 flex gap-6 border-b border-[#E5E9F0] lg:mb-6">
+      <PageHeader title={t("title")} description={carLabel(activeCar)} />
+      <nav aria-label={t("sections")} className="mb-5 flex gap-6 border-b border-[#E5E9F0] lg:mb-6">
         <Link href="?tab=overview" aria-current={tab === "overview" ? "page" : undefined} className={tabClass(tab === "overview")}>
-          Overview
+          {t("overview")}
         </Link>
         <Link href="?tab=records" aria-current={tab === "records" ? "page" : undefined} className={tabClass(tab === "records")}>
-          Records
+          {t("records")}
         </Link>
       </nav>
 

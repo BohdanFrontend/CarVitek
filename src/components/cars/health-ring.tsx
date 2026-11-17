@@ -1,8 +1,11 @@
+import { useTranslations } from "next-intl"
+
 /** Колір індикатора: ≥80 зелений, ≥50 бурштиновий, інакше червоний. */
 const ringColor = (score: number) => (score >= 80 ? "#22C55E" : score >= 50 ? "#F59E0B" : "#EF4444")
 
 /** Круговий індикатор стану ТО (44px) з відсотком у центрі. */
 export function HealthRing({ score, size = 44 }: { score: number; size?: number }) {
+  const t = useTranslations("garage")
   const stroke = 4
   const r = (size - stroke) / 2
   const c = 2 * Math.PI * r
@@ -10,8 +13,8 @@ export function HealthRing({ score, size = 44 }: { score: number; size?: number 
   return (
     <span
       role="img"
-      aria-label={`Maintenance health ${score}%`}
-      title={`Maintenance health: ${score}%`}
+      aria-label={t("health", { score })}
+      title={t("health", { score })}
       className="relative inline-grid shrink-0 place-items-center"
       style={{ width: size, height: size }}
     >

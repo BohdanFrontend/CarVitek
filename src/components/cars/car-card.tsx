@@ -3,6 +3,7 @@
 import { Car, Check, CircleCheck, EllipsisVertical, Gauge, Pencil, Plus, Trash2 } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
+import { useTranslations } from "next-intl"
 import { useRouter } from "next/navigation"
 import { useState, useTransition } from "react"
 import { toast } from "sonner"
@@ -27,7 +28,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import type { EngineType } from "@/lib/cars/format"
-import { carName, formatMileage } from "@/lib/cars/format"
+import { useFormat } from "@/i18n/format-client"
+import { useMessageText } from "@/i18n/use-message"
+import { carName } from "@/lib/cars/format"
 import { EngineBadge } from "./engine-badge"
 import { HealthRing } from "./health-ring"
 
@@ -53,12 +56,16 @@ export function CarCard({ car, active }: { car: GarageCar; active: boolean }) {
   const [deleting, startDelete] = useTransition()
   const [activating, startActivate] = useTransition()
   const name = carName(car)
+  const t = useTranslations("garage")
+  const tc = useTranslations("common")
+  const f = useFormat()
+  const text = useMessageText()
 
   const makeActive = () =>
     startActivate(async () => {
       const res = await setActiveCar(car.id)
-      if (res.ok) toast.success(`${name} is now your active car`)
-      else toast.error(res.message)
+      if (res.ok) toast.success(t("nowActive", { name }))
+      else toast.error(text(res.message))
     })
 
   const remove = () =>
@@ -66,9 +73,9 @@ export function CarCard({ car, active }: { car: GarageCar; active: boolean }) {
       const res = await deleteCar(car.id)
       if (res.ok) {
         setConfirmOpen(false)
-        toast.success(`${name} was deleted`)
+        toast.success(t("deleted", { name }))
       } else {
-        toast.error(res.message)
+        toast.error(text(res.message))
       }
     })
 
@@ -80,7 +87,7 @@ export function CarCard({ car, active }: { car: GarageCar; active: boolean }) {
         active && "outline-2 -outline-offset-1 outline-[#1766F2]",
         (deleting || activating) && "opacity-70"
       )}
-      aria-label={active ? `${name} (active)` : name}
+      aria-label={active ? t("activeLabel", { name }) : name}
     >
       <div className="relative aspect-[12/5] overflow-hidden rounded-[14px] bg-[#EAF1FE] md:aspect-[16/10] lg:aspect-[3/2] lg:rounded-[16px]">
         {car.photoUrl ? (
@@ -100,7 +107,7 @@ export function CarCard({ car, active }: { car: GarageCar; active: boolean }) {
         {active && (
           <span className="absolute top-2.5 left-2.5 inline-flex h-6 items-center gap-1 rounded-full bg-[#1766F2] px-2.5 text-xs font-semibold text-white shadow-sm lg:top-3 lg:left-3 lg:h-7 lg:px-3 lg:text-[13px]">
             <Check className="size-3.5" strokeWidth={2.6} aria-hidden />
-            Active
+            {t("active")}
           </span>
         )}
 
@@ -125,7 +132,7 @@ export function CarCard({ car, active }: { car: GarageCar; active: boolean }) {
           <EngineBadge type={car.engine_type} className="lg:h-8 lg:px-3 lg:text-sm" />
           <span className="inline-flex items-center gap-1.5 text-[15px] font-semibold text-[#0B1220] lg:text-[17px]">
             <Gauge className="size-4 text-[#5B6475] lg:size-[18px]" aria-hidden />
-            {formatMileage(car.current_mileage)}
+            {f.km(car.current_mileage)}
           </span>
           {car.health != null && (
             <span className="-my-2 ml-auto">
@@ -139,20 +146,20 @@ export function CarCard({ car, active }: { car: GarageCar; active: boolean }) {
         <AlertDialogContent className="rounded-[20px]">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-lg font-bold text-[#0B1220]">
-              Delete {name}?
+              {t("deleteTitle", { name })}
             </AlertDialogTitle>
             <AlertDialogDescription className="text-[15px] text-[#5B6475]">
-              All service records, fuel logs and expenses for this car will be permanently deleted.
+              {t("deleteText")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={deleting}>{tc("cancel")}</AlertDialogCancel>
             <Button
               onClick={remove}
               disabled={deleting}
               className="bg-destructive text-white hover:bg-destructive/90"
             >
-              {deleting ? "Deleting…" : "Delete"}
+              {deleting ? tc("deleting") : tc("delete")}
             </Button>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -169,7 +176,7 @@ export function CarCard({ car, active }: { car: GarageCar; active: boolean }) {
             "place-items-center text-[#0B1220] transition-colors outline-none focus-visible:ring-3 focus-visible:ring-[#1766F2]/40",
             triggerClassName
           )}
-          aria-label={`Actions for ${name}`}
+          aria-label={t("actionsFor", { name })}
         >
           <EllipsisVertical className="size-5" aria-hidden />
         </DropdownMenuTrigger>
@@ -179,7 +186,7 @@ export function CarCard({ car, active }: { car: GarageCar; active: boolean }) {
             className="h-10 gap-2.5 px-2.5 text-[15px]"
           >
             <Pencil className="size-4" aria-hidden />
-            Edit
+            {tc("edit")}
           </DropdownMenuItem>
           <DropdownMenuItem
             disabled={active}
@@ -187,7 +194,7 @@ export function CarCard({ car, active }: { car: GarageCar; active: boolean }) {
             className="h-10 gap-2.5 px-2.5 text-[15px]"
           >
             <CircleCheck className="size-4" aria-hidden />
-            Set as active
+            {t("setActive")}
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem
@@ -196,7 +203,7 @@ export function CarCard({ car, active }: { car: GarageCar; active: boolean }) {
             className="h-10 gap-2.5 px-2.5 text-[15px]"
           >
             <Trash2 className="size-4" aria-hidden />
-            Delete
+            {tc("delete")}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
@@ -206,13 +213,14 @@ export function CarCard({ car, active }: { car: GarageCar; active: boolean }) {
 
 /** Горизонтальна кнопка «+ Add car» на всю ширину під сіткою карток (як у макеті). */
 export function AddCarButton() {
+  const tc = useTranslations("common")
   return (
     <Link
       href="/garage/new"
       className="flex h-16 items-center justify-center gap-2.5 rounded-[16px] border-2 border-dashed border-[#B9C7E6] text-lg font-bold text-[#1766F2] transition-colors outline-none hover:border-[#1766F2] hover:bg-[#EEF4FF]/60 focus-visible:ring-3 focus-visible:ring-[#1766F2]/30 lg:h-[72px] lg:text-xl"
     >
       <Plus className="size-6 lg:size-7" strokeWidth={2.4} aria-hidden />
-      Add car
+      {tc("addCar")}
     </Link>
   )
 }

@@ -1,8 +1,8 @@
+import { getTranslations } from "next-intl/server"
 import { cache } from "react"
 
 import type { Enums } from "@/lib/supabase/database.types"
 import { createClient } from "@/lib/supabase/server"
-import { maintenanceName } from "./names"
 
 export type MaintenanceType = {
   id: string
@@ -20,6 +20,7 @@ export type MaintenanceType = {
 /** Довідник робіт: системні + власні типи користувача (RLS), з англійськими назвами. */
 export const getMaintenanceTypes = cache(async (): Promise<MaintenanceType[]> => {
   const supabase = await createClient()
+  const tm = await getTranslations("maintenanceTypes")
   const { data, error } = await supabase
     .from("maintenance_types")
     .select("id, code, name, interval_km, interval_months, engine_types, sort_order, owner_id")
@@ -28,7 +29,8 @@ export const getMaintenanceTypes = cache(async (): Promise<MaintenanceType[]> =>
   if (error) throw new Error(`Failed to load maintenance types: ${error.message}`)
   return data.map(({ owner_id, ...t }) => ({
     ...t,
-    name: maintenanceName(t.code, t.name),
+    // системні роботи — назва зі словника за code (мова користувача), власні — як є
+    name: t.code && tm.has(t.code as never) ? tm(t.code as never) : t.name,
     isCustom: owner_id != null,
   }))
 })

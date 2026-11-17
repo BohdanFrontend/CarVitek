@@ -4,31 +4,31 @@ const email = z
   .string()
   .trim()
   .toLowerCase()
-  .min(1, "Enter your email")
-  .pipe(z.email("Enter a valid email"))
+  .min(1, "validation.enterEmail")
+  .pipe(z.email("validation.invalidEmail"))
 
 const newPassword = z
   .string()
-  .min(8, "At least 8 characters")
-  .max(72, "At most 72 characters")
-  .regex(/[A-Za-zА-Яа-яІіЇїЄєҐґ]/, "Must contain at least one letter")
-  .regex(/\d/, "Must contain at least one digit")
+  .min(8, "validation.passwordMin")
+  .max(72, "validation.passwordMax")
+  .regex(/[A-Za-zА-Яа-яІіЇїЄєҐґ]/, "validation.passwordLetter")
+  .regex(/\d/, "validation.passwordDigit")
 
 export const loginSchema = z.object({
   email,
-  password: z.string().min(1, "Enter your password"),
+  password: z.string().min(1, "validation.enterPassword"),
 })
 
 export const registerSchema = z
   .object({
-    fullName: z.string().trim().min(2, "At least 2 characters").max(60, "Name is too long"),
+    fullName: z.string().trim().min(2, "validation.nameMin").max(60, "validation.nameMax"),
     email,
     password: newPassword,
     confirmPassword: z.string(),
   })
   .refine((d) => d.password === d.confirmPassword, {
     path: ["confirmPassword"],
-    message: "Passwords don't match",
+    message: "validation.passwordsDontMatch",
   })
 
 export const forgotPasswordSchema = z.object({ email })
@@ -40,5 +40,19 @@ export const updatePasswordSchema = z
   })
   .refine((d) => d.password === d.confirmPassword, {
     path: ["confirmPassword"],
-    message: "Passwords don't match",
+    message: "validation.passwordsDontMatch",
   })
+
+/** Зміна пароля в налаштуваннях: поточний + новий (ті самі правила, що й updatePasswordSchema). */
+export const changePasswordSchema = z
+  .object({
+    currentPassword: z.string().min(1, "validation.enterPassword"),
+    password: newPassword,
+    confirmPassword: z.string(),
+  })
+  .refine((d) => d.password === d.confirmPassword, {
+    path: ["confirmPassword"],
+    message: "validation.passwordsDontMatch",
+  })
+
+export const fullNameSchema = z.string().trim().min(2, "validation.nameMin").max(60, "validation.nameMax")

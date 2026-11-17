@@ -26,18 +26,6 @@ export const EXPENSE_CATEGORIES = [
   "other",
 ] as const satisfies readonly ExpenseCategory[]
 
-export const CATEGORY_LABELS: Record<SpendCategory, string> = {
-  fuel: "Fuel",
-  maintenance: "Maintenance",
-  repair: "Repair",
-  insurance: "Insurance",
-  wash: "Car wash",
-  parking: "Parking",
-  tax: "Tax",
-  fine: "Fines",
-  other: "Other",
-}
-
 /** Сталі кольори категорій (діаграми й легенди). */
 export const CATEGORY_COLORS: Record<SpendCategory, string> = {
   fuel: "#F97316",

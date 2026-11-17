@@ -1,4 +1,5 @@
 import type { Metadata } from "next"
+import { getTranslations } from "next-intl/server"
 import { notFound, redirect } from "next/navigation"
 import { z } from "zod"
 
@@ -11,11 +12,14 @@ import { getMaintenanceTypes, typesForEngine } from "@/lib/maintenance/types"
 import { getServiceRecord, getStationSuggestions } from "@/lib/service-log/queries"
 import { createClient } from "@/lib/supabase/server"
 
-export const metadata: Metadata = { title: "Edit service record" }
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: (await getTranslations("serviceLog.form"))("editTitle") }
+}
 
 export default async function EditServiceRecordPage({ params }: PageProps<"/service-log/[id]/edit">) {
   const { id } = await params
   if (!z.uuid().safeParse(id).success) notFound()
+  const t = await getTranslations("serviceLog")
 
   const supabase = await createClient()
   const { data } = await supabase.auth.getClaims()
@@ -43,7 +47,7 @@ export default async function EditServiceRecordPage({ params }: PageProps<"/serv
 
   return (
     <div className="mx-auto max-w-[880px] 3xl:max-w-[1040px]">
-      <BackLink href="/service-log" label="Back to Service Log" />
+      <BackLink href="/service-log" label={t("form.back")} />
       <ServiceRecordForm
         userId={userId}
         car={{ id: car.id, label: carLabel(car), current_mileage: car.current_mileage }}

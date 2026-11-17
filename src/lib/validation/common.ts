@@ -1,38 +1,38 @@
 import { z } from "zod"
 
 import { todayInKyiv } from "@/lib/dates"
-import { formatKm } from "@/lib/format"
+import { msg } from "@/i18n/messages"
 import { MAX_MILEAGE } from "@/lib/validation/car"
 
 export const MAX_MONEY = 99_999_999.99
 
 /** Дата "YYYY-MM-DD", не в майбутньому (за київським часом). */
 export const pastDate = z
-  .string({ error: "Select a date" })
-  .regex(/^\d{4}-\d{2}-\d{2}$/, "Select a date")
-  .refine((v) => v <= todayInKyiv(), { message: "Date can't be in the future" })
-  .refine((v) => v >= "1950-01-01", { message: "Date is too far in the past" })
+  .string({ error: "validation.selectDate" })
+  .regex(/^\d{4}-\d{2}-\d{2}$/, "validation.selectDate")
+  .refine((v) => v <= todayInKyiv(), { message: "validation.dateFuture" })
+  .refine((v) => v >= "1950-01-01", { message: "validation.datePast" })
 
 export const mileageNumber = z
-  .number({ error: "Enter the mileage" })
-  .int("Mileage must be a whole number")
-  .min(0, "Mileage can't be negative")
-  .max(MAX_MILEAGE, `At most ${formatKm(MAX_MILEAGE)}`)
+  .number({ error: "validation.enterMileage" })
+  .int("validation.mileageWhole")
+  .min(0, "validation.mileageNegative")
+  .max(MAX_MILEAGE, msg("validation.mileageMax", { km: MAX_MILEAGE }))
 
 export const moneyNumber = z
-  .number({ error: "Enter an amount" })
-  .min(0, "Amount can't be negative")
-  .max(MAX_MONEY, "Amount is too large")
+  .number({ error: "validation.enterAmount" })
+  .min(0, "validation.amountNegative")
+  .max(MAX_MONEY, "validation.amountTooLarge")
   .refine((v) => Math.abs(v * 100 - Math.round(v * 100)) < 1e-6, {
-    message: "At most 2 decimal places",
+    message: "validation.twoDecimals",
   })
 
 /** Поле форми з пробігом (рядок → число). */
 export const mileageString = z
   .string()
   .trim()
-  .min(1, "Enter the mileage")
-  .regex(/^\d+$/, "Use digits only")
+  .min(1, "validation.enterMileage")
+  .regex(/^\d+$/, "validation.digitsOnly")
   .transform(Number)
   .pipe(mileageNumber)
 
@@ -42,9 +42,9 @@ export const moneyString = ({ required = false }: { required?: boolean } = {}) =
     .string()
     .trim()
     .transform((v) => v.replace(",", "."))
-    .refine((v) => (required ? v !== "" : true), { message: "Enter an amount" })
+    .refine((v) => (required ? v !== "" : true), { message: "validation.enterAmount" })
     .refine((v) => v === "" || /^\d{1,8}(\.\d{1,2})?$/.test(v), {
-      message: "Enter an amount like 60.50",
+      message: "validation.amountFormat",
     })
     .transform((v) => (v === "" ? 0 : Number(v)))
     .pipe(moneyNumber)
@@ -54,5 +54,5 @@ export const optionalText = (max: number) =>
   z
     .string()
     .trim()
-    .max(max, `At most ${max} characters`)
+    .max(max, msg("validation.maxChars", { max }))
     .transform((v) => v || null)

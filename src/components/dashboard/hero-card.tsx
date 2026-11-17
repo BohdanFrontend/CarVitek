@@ -1,9 +1,10 @@
 import { Car, Droplets, Fuel, Zap, type LucideIcon } from "lucide-react"
+import { getTranslations } from "next-intl/server"
 import Image from "next/image"
 import { cn } from "cn"
 
-import { ENGINE_LABELS, carName, type EngineType } from "@/lib/cars/format"
-import { formatKm } from "@/lib/format"
+import { getFormat } from "@/i18n/format-server"
+import { carName, type EngineType } from "@/lib/cars/format"
 import { dashboardCardClass } from "./card-styles"
 import { UpdateMileageDialog } from "./update-mileage-dialog"
 
@@ -25,13 +26,19 @@ type HeroCardProps = {
  * Мобільний: фото на всю ширину (16:9), під ним назва, пробіг і чіпи в рядок.
  * Десктоп: фото ліворуч з назвою під ним, праворуч пробіг, чіпи і «Update mileage».
  */
-export function HeroCard({ car, photoUrl, avgConsumption }: HeroCardProps) {
+export async function HeroCard({ car, photoUrl, avgConsumption }: HeroCardProps) {
+  const [t, tg, tf, f] = await Promise.all([
+    getTranslations("dashboard"),
+    getTranslations("garage"),
+    getTranslations("fuel"),
+    getFormat(),
+  ])
   const title = car.year ? `${carName(car)} ${car.year}` : carName(car)
   const electric = car.engine_type === "electric"
 
   return (
     <section
-      aria-label={`${title}, current mileage ${formatKm(car.current_mileage)}`}
+      aria-label={t("heroLabel", { title, km: f.km(car.current_mileage) })}
       className={cn(dashboardCardClass, "p-3 lg:p-5 2xl:p-7 3xl:p-9 4xl:p-11")}
     >
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] lg:gap-7 2xl:gap-9 3xl:gap-12">
@@ -58,16 +65,19 @@ export function HeroCard({ car, photoUrl, avgConsumption }: HeroCardProps) {
         <div className="flex flex-col px-2 pb-2 lg:justify-center lg:px-0 lg:pb-0">
           <h2 className="text-[17px] font-bold text-[#0B1220] lg:hidden">{title}</h2>
           <p className="mt-1 text-[40px] leading-[1.1] font-extrabold tracking-[-0.03em] whitespace-nowrap text-[#0B1220] lg:mt-0 lg:text-[44px] xl:text-[50px] 2xl:text-[58px] 3xl:text-[72px] 4xl:text-[88px]">
-            {formatKm(car.current_mileage)}
+            {f.km(car.current_mileage)}
           </p>
 
           <ul className="mt-4 flex flex-wrap gap-2.5 lg:flex-col lg:items-start 2xl:mt-6 2xl:gap-3 3xl:mt-8 3xl:gap-4">
             <Chip icon={electric ? Zap : Fuel} iconClassName={electric ? "text-[#15803D]" : undefined}>
-              {ENGINE_LABELS[car.engine_type]}
+              {tg(`engine.${car.engine_type}`)}
             </Chip>
             {/* Для електро — енергоспоживання з журналу зарядок (той самий розрахунок) */}
             <Chip icon={electric ? Zap : Droplets}>
-              Avg {avgConsumption != null ? avgConsumption.toFixed(1) : "—"} {electric ? "kWh" : "L"}/100 km
+              {t("avg", {
+                value: avgConsumption != null ? f.number(avgConsumption, 1) : "—",
+                per100: tf("per100", { unit: f.units[electric ? "kWh" : "L"] }),
+              })}
             </Chip>
           </ul>
 

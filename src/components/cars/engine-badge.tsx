@@ -1,7 +1,8 @@
 import { BatteryCharging, Flame, Fuel, Zap, type LucideIcon } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { cn } from "cn"
 
-import { ENGINE_LABELS, type EngineType } from "@/lib/cars/format"
+import type { EngineType } from "@/lib/cars/format"
 
 /** Іконки типів двигуна — спільні для бейджа на картці й вибору у формі. */
 export const ENGINE_ICONS: Record<EngineType, LucideIcon> = {
@@ -14,6 +15,7 @@ export const ENGINE_ICONS: Record<EngineType, LucideIcon> = {
 
 /** Тип двигуна з іконкою; електро — зеленим. */
 export function EngineBadge({ type, className }: { type: EngineType; className?: string }) {
+  const t = useTranslations("garage")
   const electric = type === "electric"
   const Icon = ENGINE_ICONS[type]
 
@@ -26,7 +28,7 @@ export function EngineBadge({ type, className }: { type: EngineType; className?:
       )}
     >
       <Icon className="size-3.5" strokeWidth={2.2} aria-hidden />
-      {ENGINE_LABELS[type]}
+      {t(`engine.${type}`)}
     </span>
   )
 }

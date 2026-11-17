@@ -17,5 +17,3 @@ export function todayInKyiv(now: Date = new Date()): ISODate {
   }).format(now)
 }
 
-/** "2026-09-14" → "14 Sep 2026" */
-export const formatDate = (value: ISODate) => format(fromISODate(value), "d MMM yyyy")

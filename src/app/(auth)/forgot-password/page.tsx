@@ -1,6 +1,7 @@
 "use client"
 
 import { ArrowLeft, Mail } from "lucide-react"
+import { useTranslations } from "next-intl"
 import Link from "next/link"
 import { useActionState } from "react"
 import { cn } from "cn"
@@ -16,13 +17,11 @@ const initialState: AuthFormState = { status: "idle" }
 
 export default function ForgotPasswordPage() {
   const [state, formAction, pending] = useActionState(requestPasswordReset, initialState)
+  const t = useTranslations("auth")
 
   return (
     <>
-      <AuthHeader
-        title="Reset password"
-        subtitle="Enter your email and we'll send you a reset link"
-      />
+      <AuthHeader title={t("forgot.title")} subtitle={t("forgot.subtitle")} />
 
       <div className={authCardClass}>
         {state.status === "success" ? (
@@ -33,21 +32,21 @@ export default function ForgotPasswordPage() {
             <AuthField
               name="email"
               type="email"
-              label="Email address"
+              label={t("email")}
               icon={Mail}
               autoComplete="email"
               defaultValue={state.values?.email}
               errors={state.fieldErrors?.email}
               autoFocus
             />
-            <AuthSubmit pending={pending}>Send reset link</AuthSubmit>
+            <AuthSubmit pending={pending}>{t("forgot.submit")}</AuthSubmit>
           </form>
         )}
 
         <div className="mt-3.5 flex justify-center lg:mt-6">
           <Link href="/login" className={cn(authLinkClass, "inline-flex items-center gap-2")}>
             <ArrowLeft className="size-5" aria-hidden />
-            Back to log in
+            {t("backToLogin")}
           </Link>
         </div>
       </div>
